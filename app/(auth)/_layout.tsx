@@ -1,11 +1,7 @@
-import { Text, View } from "react-native";
+import { Slot } from "expo-router";
 
 const AuthLayout = () => {
-  return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-      <Text>Auth Layout</Text>
-    </View>
-  );
+  return <Slot />;
 };
 
 export default AuthLayout;

@@ -1,10 +1,13 @@
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
 import React from "react";
 import { StyleSheet } from "react-native";
 
 import Ionicons from "@expo/vector-icons/Ionicons";
+
 type TabsProps = any;
 const TabsLayout = ({ isActive }: TabsProps) => {
+  const isAuthenticated = false;
+  if (!isAuthenticated) return <Redirect href={"/(auth)/LoginScreen"} />;
   return (
     <Tabs
       screenOptions={{
