@@ -1,7 +1,9 @@
 import CartComponent from "@/components/CartComponent";
 import { image_layout, images } from "@/constants/images";
+import * as Sentry from "@sentry/react-native";
 import React, { Fragment } from "react";
 import {
+  Button,
   Dimensions,
   FlatList,
   Image,
@@ -98,6 +100,12 @@ const Homescreen = () => {
               }}
             >
               <View style={{ flexDirection: "column", alignItems: "center" }}>
+                <Button
+                  title="Try!"
+                  onPress={() => {
+                    Sentry.captureException(new Error("First error"));
+                  }}
+                />
                 <Text
                   style={{
                     fontSize: 12,
@@ -140,6 +148,14 @@ const Homescreen = () => {
                 </TouchableOpacity>
               </View>
             </View>
+          }
+          ListFooterComponent={
+            <Button
+              title="Try!"
+              onPress={() => {
+                Sentry.captureException(new Error("First error"));
+              }}
+            />
           }
         />
       </View>
