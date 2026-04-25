@@ -6,6 +6,9 @@ export const images = {
   userImage: require("../assets/icons/user.png"),
   personImage: require("../assets/icons/person.png"),
   cartImage: require("../assets/icons/bag.png"),
+  eyeImage: require("../assets/icons/eye.png"),
+  logoImage: require("../assets/images/logo.png"),
+  loginGraphicsImage: require("../assets/images/login-graphic.png"),
 };
 
 type ImageLayout = {
