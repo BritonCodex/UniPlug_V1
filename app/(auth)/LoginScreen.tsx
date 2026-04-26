@@ -12,6 +12,9 @@ import CustomButton from "@/components/CustomButton";
 import CustomInput from "@/components/CustomInput";
 import { AuthenticationProps } from "@/constants/props";
 import { router } from "expo-router";
+
+import { signIn } from "@/lib/appwrite";
+import * as Sentry from "@sentry/react-native";
 const { width, height } = Dimensions.get("screen");
 
 const useSignin = (): AuthenticationProps => {
@@ -43,12 +46,14 @@ const LoginScreen = () => {
         "Please enter valid credentions",
       );
 
-    setIsSubmitting(false);
+    setIsSubmitting(true);
 
     try {
+      await signIn({ email: form.email, password: form.password });
       router.replace("/(tabs)/Homescreen");
     } catch (error: any) {
       Alert.alert("Error", error.message);
+      Sentry.captureEvent(error);
     } finally {
       setIsSubmitting(false);
       console.log("ending Submission...");

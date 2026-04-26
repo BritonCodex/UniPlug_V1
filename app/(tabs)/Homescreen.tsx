@@ -1,5 +1,6 @@
 import CartComponent from "@/components/CartComponent";
 import { image_layout, images } from "@/constants/images";
+import useAuthStore from "@/store/auth.store";
 import * as Sentry from "@sentry/react-native";
 import React, { Fragment } from "react";
 import {
@@ -17,6 +18,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const { width, height } = Dimensions.get("screen");
 const Homescreen = () => {
+  const { user } = useAuthStore();
+  console.log("User:", JSON.stringify(user, null, 2));
+
   return (
     <SafeAreaView style={styles.pageContainer}>
       {/* header component */}
@@ -100,12 +104,6 @@ const Homescreen = () => {
               }}
             >
               <View style={{ flexDirection: "column", alignItems: "center" }}>
-                <Button
-                  title="Try!"
-                  onPress={() => {
-                    Sentry.captureException(new Error("First error"));
-                  }}
-                />
                 <Text
                   style={{
                     fontSize: 12,

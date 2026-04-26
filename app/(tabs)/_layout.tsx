@@ -1,8 +1,9 @@
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
 import React from "react";
 import { Dimensions, StyleSheet } from "react-native";
 
 import { lightTheme } from "@/constants/colors";
+import useAuthStore from "@/store/auth.store";
 import Ionicons from "@expo/vector-icons/Ionicons";
 
 const { height, width } = Dimensions.get("screen");
@@ -10,6 +11,8 @@ type TabsProps = any;
 const TabsLayout = ({ isActive }: TabsProps) => {
   //const isAuthenticated = false;
   //if (!isAuthenticated) return <Redirect href={"/(auth)/LoginScreen"} />;
+  const { isAuthenticated } = useAuthStore();
+  if (!isAuthenticated) return <Redirect href={"/(auth)/LoginScreen"} />;
   return (
     <Tabs
       screenOptions={{
