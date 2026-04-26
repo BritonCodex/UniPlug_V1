@@ -1,5 +1,6 @@
 import { JSX } from "react";
 import { KeyboardTypeOptions, TextStyle, ViewStyle } from "react-native";
+import { Models } from "react-native-appwrite";
 
 export interface CreateUserParams {
   email: string;
@@ -43,4 +44,10 @@ export interface CustomInputProps {
   keyboardType: KeyboardTypeOptions | undefined;
   onChangeText: (text: string) => void;
   onSecurePress?: (e: any) => void;
+}
+
+export interface User extends Models.Document {
+  name: string;
+  email: string;
+  avatar: string;
 }
