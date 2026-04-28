@@ -46,8 +46,43 @@ export interface CustomInputProps {
   onSecurePress?: (e: any) => void;
 }
 
+export interface FavouriteComponentProps {
+  favStyles?: ViewStyle;
+  onPress?: (e: any) => void;
+  size?: number;
+  color?: string;
+  isPressed?: boolean;
+}
+
 export interface User extends Models.Document {
   name: string;
   email: string;
   avatar: string;
+}
+
+export interface CartItemType {
+  id?: number;
+  name?: string;
+  onPress?: (e: any) => void;
+}
+
+export interface GetMenuParams {
+  category: string;
+  query: string;
+}
+
+export interface MenuItem extends Models.Document {
+  name: string;
+  price: number;
+  image_url: string;
+  description: string;
+  calories: number;
+  protein: number;
+  rating: number;
+  type: string;
+}
+
+export interface Category extends Models.Document {
+  name: string;
+  description: string;
 }

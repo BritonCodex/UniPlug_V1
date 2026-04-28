@@ -79,6 +79,19 @@ const TabsLayout = ({ isActive }: TabsProps) => {
         }}
       />
       <Tabs.Screen
+        name="SearchScreen"
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons
+              name={isActive ? "search-outline" : "search"}
+              size={size}
+              color={color}
+            />
+          ),
+          tabBarLabel: "",
+        }}
+      />
+      <Tabs.Screen
         name="ProfileScreen"
         options={{
           tabBarIcon: ({ color, size }) => (

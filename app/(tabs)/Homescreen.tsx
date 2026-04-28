@@ -1,10 +1,9 @@
 import CartComponent from "@/components/CartComponent";
 import { image_layout, images } from "@/constants/images";
 import useAuthStore from "@/store/auth.store";
-import * as Sentry from "@sentry/react-native";
+import { Redirect } from "expo-router";
 import React, { Fragment } from "react";
 import {
-  Button,
   Dimensions,
   FlatList,
   Image,
@@ -12,7 +11,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -141,19 +140,15 @@ const Homescreen = () => {
               >
                 <CartComponent />
 
-                <TouchableOpacity onPress={() => console.log("To Profile")}>
+                <TouchableOpacity
+                  onPress={() => {
+                    <Redirect href={"/(tabs)/ProfileScreen"} />;
+                  }}
+                >
                   <Image source={images.personImage} resizeMode="center" />
                 </TouchableOpacity>
               </View>
             </View>
-          }
-          ListFooterComponent={
-            <Button
-              title="Try!"
-              onPress={() => {
-                Sentry.captureException(new Error("First error"));
-              }}
-            />
           }
         />
       </View>

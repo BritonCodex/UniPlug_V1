@@ -7,7 +7,11 @@ export const images = {
   personImage: require("../assets/icons/person.png"),
   cartImage: require("../assets/icons/bag.png"),
   eyeImage: require("../assets/icons/eye.png"),
+  minusImge: require("../assets/icons/minus.png"),
+  plusImage: require("../assets/icons/plus.png"),
+  trashImage: require("../assets/icons/trash.png"),
   logoImage: require("../assets/images/logo.png"),
+  searchImage: require("../assets/icons/search.png"),
   loginGraphicsImage: require("../assets/images/login-graphic.png"),
 };
 

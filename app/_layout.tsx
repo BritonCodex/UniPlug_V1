@@ -1,7 +1,9 @@
+import TruckLoader from "@/components/LoadingComponent";
 import useAuthStore from "@/store/auth.store";
 import * as Sentry from "@sentry/react-native";
 import { Stack } from "expo-router";
 import React, { useEffect } from "react";
+import { View } from "react-native";
 
 Sentry.init({
   dsn: "https://c92b51042369060a5f19ca4ea7a03848@o4511282686656512.ingest.us.sentry.io/4511282690326528",
@@ -32,7 +34,31 @@ const RootLayout = () => {
     fetchAuthenticatedUser();
   }, []);
 
-  if (isLoading) return null;
+  if (isLoading)
+    return (
+      <>
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: "#444242c4",
+          }}
+        >
+          <TruckLoader />
+        </View>
+        {/* <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: "#444242c4",
+          }}
+        >
+          <ActivityIndicator size={"large"} color={"orange"} />
+        </View> */}
+      </>
+    );
 
   return (
     <Stack

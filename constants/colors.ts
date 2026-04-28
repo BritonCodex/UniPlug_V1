@@ -1,7 +1,7 @@
 export const lightTheme = {
   tabBarColor: "#0a070722",
-  tabBarIcons: "#bbb5b5ff",
-  taBarIconsFocused: "#e7e0e0ff",
+  tabBarIcons: "#ece9dc9f", //#faf2f2ff
+  taBarIconsFocused: "#f5900cff", //#e7e0e0ff
 };
 
 export const darkTheme = {
