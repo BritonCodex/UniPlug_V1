@@ -53,11 +53,11 @@ const TabsLayout = ({ isActive }: TabsProps) => {
         }}
       />
       <Tabs.Screen
-        name="CategoryScreen"
+        name="SearchScreen"
         options={{
           tabBarIcon: ({ color, size }) => (
             <Ionicons
-              name={isActive ? "list-outline" : "list"}
+              name={isActive ? "search-outline" : "search"}
               size={size}
               color={color}
             />
@@ -78,19 +78,7 @@ const TabsLayout = ({ isActive }: TabsProps) => {
           tabBarLabel: "",
         }}
       />
-      <Tabs.Screen
-        name="SearchScreen"
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons
-              name={isActive ? "search-outline" : "search"}
-              size={size}
-              color={color}
-            />
-          ),
-          tabBarLabel: "",
-        }}
-      />
+
       <Tabs.Screen
         name="ProfileScreen"
         options={{
