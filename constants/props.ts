@@ -54,16 +54,14 @@ export interface FavouriteComponentProps {
   isPressed?: boolean;
 }
 
+export interface CustomHeaderProps {
+  title?: string;
+}
+
 export interface User extends Models.Document {
   name: string;
   email: string;
   avatar: string;
-}
-
-export interface CartItemType {
-  id?: number;
-  name?: string;
-  onPress?: (e: any) => void;
 }
 
 export interface GetMenuParams {
@@ -85,4 +83,31 @@ export interface MenuItem extends Models.Document {
 export interface Category extends Models.Document {
   name: string;
   description: string;
+}
+
+export interface CartCustomization {
+  id: string;
+  name: string;
+  price: number;
+  type: string;
+}
+
+export interface CartItemType {
+  id: string; // menu item id
+  name: string;
+  price: number;
+  image_url: string;
+  quantity: number;
+  customizations?: CartCustomization[];
+}
+
+export interface CartStore {
+  items: CartItemType[];
+  addItem: (item: Omit<CartItemType, "quantity">) => void;
+  removeItem: (id: string, customizations: CartCustomization[]) => void;
+  increaseQty: (id: string, customizations: CartCustomization[]) => void;
+  decreaseQty: (id: string, customizations: CartCustomization[]) => void;
+  clearCart: () => void;
+  getTotalItems: () => number;
+  getTotalPrice: () => number;
 }

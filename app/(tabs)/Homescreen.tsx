@@ -11,7 +11,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -37,17 +37,17 @@ const Homescreen = () => {
                   android_ripple={{ color: "#ffffff22" }}
                   style={[
                     styles.cards,
-                    { backgroundColor: item.color },
+                    { backgroundColor: item.color, borderRadius: 20 },
                     isEven
                       ? {
                           flexDirection: "row",
-                          borderTopEndRadius: 20,
-                          borderBottomStartRadius: 20,
+                          //borderTopEndRadius: 20,
+                          //borderBottomStartRadius: 20,
                         }
                       : {
                           flexDirection: "row-reverse",
-                          borderTopStartRadius: 20,
-                          borderBottomEndRadius: 20,
+                          //borderTopStartRadius: 20,
+                          //borderBottomEndRadius: 20,
                         },
                   ]}
                 >
@@ -87,6 +87,7 @@ const Homescreen = () => {
           contentContainerStyle={{
             paddingHorizontal: 10,
             paddingVertical: 10,
+            marginBottom: 10,
           }}
           ListHeaderComponent={
             <View

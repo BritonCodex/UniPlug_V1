@@ -27,6 +27,7 @@ const FilterComponent = ({ categories }: { categories: Category[] }) => {
   return (
     <FlatList
       horizontal
+      scrollEventThrottle={16}
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={{
         gap: 10,
