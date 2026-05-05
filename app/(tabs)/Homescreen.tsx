@@ -1,5 +1,7 @@
 import CartComponent from "@/components/CartComponent";
 import { image_layout, images } from "@/constants/images";
+import { updateUserAddress } from "@/lib/appwrite";
+import { useAddressStore } from "@/store/address.sore";
 import useAuthStore from "@/store/auth.store";
 import { router } from "expo-router";
 import React, { Fragment } from "react";
@@ -17,8 +19,28 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const { width, height } = Dimensions.get("screen");
 const Homescreen = () => {
-  const { user } = useAuthStore();
+  const { user, setUser } = useAuthStore();
   console.log("User:", JSON.stringify(user, null, 2));
+
+  //selection of address
+  const { address, setAddress } = useAddressStore();
+  React.useEffect(() => {
+    if (user?.address) {
+      setAddress(user.address);
+    }
+  }, [user]);
+  const handleSelectAddress = async (newAddress: string) => {
+    setAddress(newAddress); // instant UI
+
+    if (user?.$id) {
+      await updateUserAddress(user.$id, newAddress);
+
+      setUser({
+        ...user,
+        address: newAddress,
+      });
+    }
+  };
 
   return (
     <SafeAreaView style={styles.pageContainer}>
@@ -120,10 +142,12 @@ const Homescreen = () => {
                     gap: 4,
                   }}
                   onPress={() => {
-                    console.log("Deliver to location pressed");
+                    handleSelectAddress("Nairobi, Kenya"); // temp test
                   }}
                 >
-                  <Text style={{ fontSize: 10 }}>Kericho, Kenya</Text>
+                  <Text style={{ fontSize: 10 }}>
+                    {address || "Set delivery address"}
+                  </Text>
                   <Image
                     source={images.arrowDown}
                     resizeMode="center"
