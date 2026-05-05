@@ -24,6 +24,7 @@ export const appwriteConfig = {
   menuCollectionId: "menu",
   customizationsCollectionId: "customizations",
   menuCustomizationsCollectionId: "menu_customizations",
+  pickupLocationsCollectionId: "pickup_locations",
 };
 
 //accept new client
@@ -173,5 +174,19 @@ export const updateUserAddress = async (userId: string, address: string) => {
     );
   } catch (error) {
     console.log("Address update failed", error);
+  }
+};
+
+export const getPickupLocations = async () => {
+  try {
+    const res = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      "pickup_locations",
+    );
+
+    return res.documents;
+  } catch (error) {
+    console.log("Failed to fetch pickup locations", error);
+    return [];
   }
 };
