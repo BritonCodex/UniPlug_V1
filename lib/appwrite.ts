@@ -160,3 +160,18 @@ export const signOut = async () => {
 //     throw new Error(error as string);
 //   }
 // };
+
+export const updateUserAddress = async (userId: string, address: string) => {
+  try {
+    await databases.updateDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.userCollectionId,
+      userId,
+      {
+        address,
+      },
+    );
+  } catch (error) {
+    console.log("Address update failed", error);
+  }
+};
