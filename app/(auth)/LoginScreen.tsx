@@ -11,6 +11,7 @@ import {
 import CustomButton from "@/components/CustomButton";
 import CustomInput from "@/components/CustomInput";
 import { AuthenticationProps } from "@/constants/props";
+import useAuthStore from "@/store/auth.store";
 import { router } from "expo-router";
 
 import { signIn } from "@/lib/appwrite";
@@ -29,6 +30,7 @@ const LoginScreen = () => {
   const [form, setForm] = useState({ email: "", password: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { isSecure, setIsSecure } = useSignin();
+  const { fetchAuthenticatedUser } = useAuthStore();
 
   //create a submitting functionality
   /** an async function that checks using try..catch..finally
@@ -40,17 +42,18 @@ const LoginScreen = () => {
    */
 
   const submit = async () => {
-    if (!form.email || !form.password)
+    if (!form.email || !form.password) {
       return Alert.alert(
         "Authentication Error",
         "Please enter valid credentions",
       );
-
+    }
     setIsSubmitting(true);
 
     try {
       await signIn({ email: form.email, password: form.password });
-      router.replace("/(tabs)/Homescreen");
+      //router.replace("/(tabs)/Homescreen");
+      await fetchAuthenticatedUser();
     } catch (error: any) {
       Alert.alert("Error", error.message);
       Sentry.captureEvent(error);
@@ -105,7 +108,7 @@ const LoginScreen = () => {
               onChangeText={(text) =>
                 setForm((prev) => ({ ...prev, email: text }))
               }
-              keyboardType="default"
+              keyboardType="email-address"
             />
             <CustomInput
               placeholder="password"

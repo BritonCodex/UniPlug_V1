@@ -56,6 +56,7 @@ export interface FavouriteComponentProps {
 
 export interface CustomHeaderProps {
   title?: string;
+  imageShow?: boolean;
 }
 
 export interface User extends Models.Document {
@@ -110,4 +111,22 @@ export interface CartStore {
   clearCart: () => void;
   getTotalItems: () => number;
   getTotalPrice: () => number;
+}
+
+export interface PaymentInfoProps {
+  label: string;
+  value: string;
+  labelStyle?: string;
+  valueStyle?: string;
+}
+
+export interface User {
+  $id: string;
+  accountId: string;
+  name: string;
+  email: string;
+  avatar: string;
+
+  phoneNumber?: string;
+  address?: string;
 }

@@ -1,14 +1,15 @@
 import { images } from "@/constants/images";
 import { CustomHeaderProps } from "@/constants/props";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-const CustomHeaderComponent = ({ title }: CustomHeaderProps) => {
+const CustomHeaderComponent = ({ title, imageShow }: CustomHeaderProps) => {
   const router = useRouter();
   return (
     <View
       style={{
-        padding: 10,
+        //padding: 10,
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
@@ -28,19 +29,25 @@ const CustomHeaderComponent = ({ title }: CustomHeaderProps) => {
 
       {title && <Text style={styles.title}>{title}</Text>}
 
-      <Image
-        source={images.searchImage}
-        resizeMode="center"
-        style={styles.images}
-      />
+      {imageShow === true ? (
+        <Image
+          source={images.searchImage}
+          resizeMode="center"
+          style={styles.images}
+        />
+      ) : (
+        <TouchableOpacity>
+          <MaterialCommunityIcons name="cog" size={24} />
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   images: {
-    width: 20,
-    height: 20,
+    width: 25,
+    height: 25,
   },
   arrowImageBtn: {
     backgroundColor: "#9c9c9c22",

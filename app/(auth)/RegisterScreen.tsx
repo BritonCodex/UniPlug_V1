@@ -13,7 +13,9 @@ import CustomButton from "@/components/CustomButton";
 import CustomInput from "@/components/CustomInput";
 import { AuthenticationProps } from "@/constants/props";
 import { createUser } from "@/lib/appwrite";
+import useAuthStore from "@/store/auth.store";
 import { router } from "expo-router";
+
 const { width, height } = Dimensions.get("screen");
 
 const useSignin = (): AuthenticationProps => {
@@ -28,14 +30,15 @@ const RegisterScreen = () => {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const { isSecure, setIsSecure } = useSignin();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { fetchAuthenticatedUser } = useAuthStore();
 
   const submit = async () => {
-    if (!form.email || !form.password)
+    if (!form.email || !form.password) {
       return Alert.alert(
         "Authentication Error",
         "Please enter valid credentions",
       );
-
+    }
     setIsSubmitting(true);
 
     try {
@@ -46,7 +49,14 @@ const RegisterScreen = () => {
       });
 
       Alert.alert("Authentication Success", "User signed in successfully");
-      router.replace("/(tabs)/Homescreen");
+      //router.replace("/(tabs)/Homescreen");
+      // trigger verification email
+      //await sendEmailVerification();
+      //Alert.alert(
+      //  "Verify your email",
+      //  "We’ve sent a verification link to your email.",
+      //);
+      await fetchAuthenticatedUser();
     } catch (error: any) {
       Alert.alert("Error", error.message);
     } finally {
@@ -109,7 +119,7 @@ const RegisterScreen = () => {
               onChangeText={(text) =>
                 setForm((prev) => ({ ...prev, email: text }))
               }
-              keyboardType="default"
+              keyboardType="email-address"
             />
             <CustomInput
               placeholder="password"

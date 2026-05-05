@@ -72,6 +72,8 @@ export const createUser = async ({
         email,
         name,
         avatar: avatarUrl,
+        phoneNumber: "",
+        address: "",
       },
     );
   } catch (error) {
@@ -84,6 +86,7 @@ export const signIn = async ({ email, password }: SignInParams) => {
   try {
     // create new session
     const session = await account.createEmailPasswordSession(email, password);
+    return session;
   } catch (error) {
     throw new Error(error as string);
   }
@@ -139,3 +142,21 @@ export const getCategories = async () => {
     throw new Error(error as string);
   }
 };
+
+//logout functionality
+export const signOut = async () => {
+  try {
+    await account.deleteSession("current");
+  } catch (error) {
+    throw new Error(error as string);
+  }
+};
+
+//send email verification
+// export const sendEmailVerification = async () => {
+//   try {
+//     return await account.createVerification("client://verify-email");
+//   } catch (error) {
+//     throw new Error(error as string);
+//   }
+// };

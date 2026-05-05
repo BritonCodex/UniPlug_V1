@@ -1,23 +1,25 @@
 import { MenuItem } from "@/constants/props";
 import { appwriteConfig } from "@/lib/appwrite";
+import { useCartStore } from "@/store/cart.store";
 import React from "react";
 import {
-    Dimensions,
-    Image,
-    Platform,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
+  Dimensions,
+  Image,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
 } from "react-native";
 
 const { height, width } = Dimensions.get("screen");
 
 const MenuCardComponent = ({
-  item: { image_url, name, price },
+  item: { $id, image_url, name, price },
 }: {
   item: MenuItem;
 }) => {
   const imageUrl = `${image_url}?project=${appwriteConfig.projectId}`;
+  const { addItem } = useCartStore();
   return (
     <TouchableOpacity
       style={[
@@ -74,7 +76,15 @@ const MenuCardComponent = ({
       </Text>
 
       <TouchableOpacity
-        onPress={() => {}}
+        onPress={() => {
+          addItem({
+            id: $id,
+            name,
+            price,
+            image_url: imageUrl,
+            customizations: [],
+          });
+        }}
         style={{
           flexDirection: "row",
           justifyContent: "center",

@@ -1,7 +1,7 @@
 import CartComponent from "@/components/CartComponent";
 import { image_layout, images } from "@/constants/images";
 import useAuthStore from "@/store/auth.store";
-import { Redirect } from "expo-router";
+import { router } from "expo-router";
 import React, { Fragment } from "react";
 import {
   Dimensions,
@@ -143,10 +143,13 @@ const Homescreen = () => {
 
                 <TouchableOpacity
                   onPress={() => {
-                    <Redirect href={"/(tabs)/ProfileScreen"} />;
+                    router.push("/(tabs)/ProfileScreen");
                   }}
                 >
-                  <Image source={images.personImage} resizeMode="center" />
+                  <Image
+                    source={{ uri: user?.avatar }}
+                    style={{ width: 40, height: 40, borderRadius: 20 }}
+                  />
                 </TouchableOpacity>
               </View>
             </View>

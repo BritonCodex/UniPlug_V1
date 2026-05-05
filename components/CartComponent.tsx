@@ -1,18 +1,21 @@
 import React from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+import { useCartStore } from "@/store/cart.store";
+import { router } from "expo-router";
 import { images } from "../constants/images";
 const CartComponent = () => {
-  const cartItems = 10;
+  const { getTotalItems } = useCartStore();
+  const totalItems = getTotalItems();
   return (
     <View>
-      <TouchableOpacity onPress={() => console.log("To Cart")}>
+      <TouchableOpacity onPress={() => router.navigate("/(tabs)/CartScreen")}>
         <Image
           source={images.cartImage}
           resizeMode="center"
           style={{ tintColor: "orange" }}
         />
-        {cartItems > 0 && (
+        {totalItems > 0 && (
           <View
             style={{
               position: "absolute",
@@ -21,7 +24,7 @@ const CartComponent = () => {
               borderRadius: 10,
             }}
           >
-            <Text style={{ color: "green" }}>{cartItems}</Text>
+            <Text style={{ color: "green" }}>{totalItems}</Text>
           </View>
         )}
       </TouchableOpacity>
