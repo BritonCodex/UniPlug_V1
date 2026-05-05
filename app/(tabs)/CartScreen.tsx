@@ -1,4 +1,5 @@
 import CartItem from "@/components/CartItem";
+import CrossLoader from "@/components/CrossLoader";
 import CustomButton from "@/components/CustomButton";
 import CustomHeaderComponent from "@/components/CustomHeaderComponent";
 import { CartItemType, PaymentInfoProps } from "@/constants/props";
@@ -56,26 +57,26 @@ const CartScreen = ({ item }: { item: CartItemType }) => {
         renderItem={({ item }) => <CartItem item={item} />}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{
+          flexGrow: 1,
           paddingBottom: 28,
           paddingHorizontal: 10,
           paddingTop: 5,
-          //backgroundColor: "red",
-          height: "100%",
         }}
         ListHeaderComponent={() => (
           <CustomHeaderComponent title="Cart" imageShow={true} />
         )}
         ListEmptyComponent={() => (
-          <Text
-            style={{
-              fontSize: 15,
-              fontWeight: 400,
-              lineHeight: 2,
-              textAlign: "center",
-            }}
+          // <View style={styles.emptyContainer}>
+          //   <PulseLoader />
+          // </View>
+          <View
+            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
           >
-            Cart empty
-          </Text>
+            <CrossLoader />
+            <Text style={{ marginTop: 10, color: "#6666668f", fontSize: 14 }}>
+              Loading your cart...
+            </Text>
+          </View>
         )}
         ListFooterComponent={() =>
           totalItems > 0 && (
@@ -147,6 +148,12 @@ const CartScreen = ({ item }: { item: CartItemType }) => {
   );
 };
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  // emptyContainer: {
+  //   flex: 1,
+  //   justifyContent: "center",
+  //   alignItems: "center",
+  // },
+});
 
 export default CartScreen;
