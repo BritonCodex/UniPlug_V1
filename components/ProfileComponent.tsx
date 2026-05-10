@@ -10,45 +10,70 @@ export type ProfileFieldProps = {
 const ProfileFieldCard = ({ label, value, icon }: ProfileFieldProps) => {
   return (
     <View style={styles.container}>
-      <View style={styles.labelRow}>
-        {icon && <View style={{ marginRight: 8 }}>{icon}</View>}
-        <Text style={styles.label}>{label}</Text>
-      </View>
+      {/* LEFT SIDE */}
+      <View style={styles.left}>
+        {icon && <View style={styles.iconBox}>{icon}</View>}
 
-      <Text style={styles.value}>
-        {value && value.length > 0 ? value : "Not set"}
-      </Text>
+        <View>
+          <Text style={styles.label}>{label}</Text>
+          <Text style={styles.value}>
+            {value && value.length > 0 ? value : "Not set"}
+          </Text>
+        </View>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    width: "70%",
-    padding: 8,
+    width: "92%",
+    paddingVertical: 14,
+    paddingHorizontal: 14,
     marginVertical: 6,
-    borderRadius: 12,
-    backgroundColor: "#F8F8F8",
-    borderWidth: 0.5,
-    borderColor: "#ddd",
-    flexDirection: "row",
-    justifyContent: "flex-start",
-    gap: 20,
+
+    borderRadius: 16,
+
+    // LIGHT PREMIUM GLASS STYLE
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#ECECEC",
+
+    // soft shadow (iOS + Android)
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
-  labelRow: {
+
+  left: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 4,
   },
+
+  iconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: "#F3F4FF",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+
   label: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "600",
-    color: "#444",
+    color: "#8A8A8A",
+    marginBottom: 2,
+    letterSpacing: 0.3,
   },
+
   value: {
     fontSize: 15,
-    fontWeight: "500",
-    color: "#111",
+    fontWeight: "600",
+    color: "#111827",
   },
 });
 
