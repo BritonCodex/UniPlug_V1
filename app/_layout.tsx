@@ -1,4 +1,4 @@
-import TruckLoader from "@/components/LoadingComponent";
+import PulseLoader from "@/components/Pulseloader";
 import useAuthStore from "@/store/auth.store";
 import * as Sentry from "@sentry/react-native";
 import { Stack } from "expo-router";
@@ -42,10 +42,10 @@ const RootLayout = () => {
             flex: 1,
             justifyContent: "center",
             alignItems: "center",
-            backgroundColor: "#444242c4",
+            backgroundColor: "#e9dab3c4",
           }}
         >
-          <TruckLoader />
+          <PulseLoader />
         </View>
         {/* <View
           style={{

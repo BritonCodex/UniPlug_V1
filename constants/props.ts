@@ -130,3 +130,31 @@ export interface User {
   phoneNumber?: string;
   address?: string;
 }
+
+export interface OrderItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image_url: string;
+  customizations?: any[];
+}
+
+export interface Order {
+  id: string;
+  userId: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone?: string;
+  items: OrderItem[];
+  totalAmount: number;
+  status:
+    | "pending"
+    | "processing"
+    | "delivered"
+    | "cancelled"
+    | "failed"
+    | "verified"
+    | "shipped";
+  createdAt: number;
+}

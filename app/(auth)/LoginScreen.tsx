@@ -45,21 +45,20 @@ const LoginScreen = () => {
     if (!form.email || !form.password) {
       return Alert.alert(
         "Authentication Error",
-        "Please enter valid credentions",
+        "Please enter valid credentials",
       );
     }
+
     setIsSubmitting(true);
 
     try {
       await signIn({ email: form.email, password: form.password });
-      //router.replace("/(tabs)/Homescreen");
       await fetchAuthenticatedUser();
     } catch (error: any) {
       Alert.alert("Error", error.message);
-      Sentry.captureEvent(error);
+      Sentry.captureException(error);
     } finally {
       setIsSubmitting(false);
-      console.log("ending Submission...");
     }
   };
   return (

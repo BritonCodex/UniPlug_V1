@@ -12,10 +12,10 @@ type AuthState = {
   setUser: (user: User | null) => void;
   setLoading: (loading: boolean) => void;
 
-  logout: () => Promise<void>;
-
   //fetch
   fetchAuthenticatedUser: () => Promise<void>;
+
+  logout: () => Promise<void>;
 };
 
 const useAuthStore = create<AuthState>((set) => ({
@@ -51,6 +51,7 @@ const useAuthStore = create<AuthState>((set) => ({
       set({
         isAuthenticated: false,
         user: null,
+        isLoading: false,
       });
     } catch (error) {
       console.log("logout error", error);

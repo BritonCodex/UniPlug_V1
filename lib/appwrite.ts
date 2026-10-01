@@ -25,6 +25,7 @@ export const appwriteConfig = {
   customizationsCollectionId: "customizations",
   menuCustomizationsCollectionId: "menu_customizations",
   pickupLocationsCollectionId: "pickup_locations",
+  orderCollectionId: "orders",
 };
 
 //accept new client
@@ -187,6 +188,37 @@ export const getPickupLocations = async () => {
     return res.documents;
   } catch (error) {
     console.log("Failed to fetch pickup locations", error);
+    return [];
+  }
+};
+
+export const createOrderInDB = async (order: any) => {
+  try {
+    const res = await databases.createDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.orderCollectionId,
+      ID.unique(),
+      order,
+    );
+
+    return res;
+  } catch (error) {
+    console.log("Create order error:", error);
+    throw error;
+  }
+};
+
+export const getUserOrdersFromDB = async (userId: string) => {
+  try {
+    const res = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.orderCollectionId,
+      [Query.equal("userId", userId)],
+    );
+
+    return res.documents;
+  } catch (error) {
+    console.log("Fetch orders error:", error);
     return [];
   }
 };

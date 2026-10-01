@@ -14,7 +14,7 @@ import {
 
 const { height, width } = Dimensions.get("screen");
 const AuthLayout = () => {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isLoading } = useAuthStore();
   if (isAuthenticated) return <Redirect href={"/(tabs)/Homescreen"} />;
   return (
     <KeyboardAvoidingView

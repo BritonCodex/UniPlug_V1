@@ -8,7 +8,6 @@ import { router } from "expo-router";
 import React from "react";
 import {
   Animated,
-  Dimensions,
   FlatList,
   Image,
   PanResponder,
@@ -16,21 +15,24 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const { width, height } = Dimensions.get("screen");
+// ---------------- DESIGN TOKENS ----------------
+const SPACING = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24 };
+const RADIUS = { sm: 8, md: 14, lg: 20, sheet: 28 };
+const CARD_HEIGHT = 160;
 
 const Homescreen = () => {
+  const { width, height } = useWindowDimensions();
   const { user, setUser } = useAuthStore();
-
   const { address, setAddress } = useAddressStore();
 
+  // ---------------- ADDRESS ----------------
   React.useEffect(() => {
-    if (user?.address) {
-      setAddress(user.address);
-    }
+    if (user?.address) setAddress(user.address);
   }, [user]);
 
   const handleSelectAddress = async (newAddress: string) => {
@@ -38,11 +40,7 @@ const Homescreen = () => {
 
     if (user?.$id) {
       await updateUserAddress(user.$id, newAddress);
-
-      setUser({
-        ...user,
-        address: newAddress,
-      });
+      setUser({ ...user, address: newAddress });
     }
   };
 
@@ -55,16 +53,14 @@ const Homescreen = () => {
       const data = await getPickupLocations();
       setLocations(data);
     };
-
     loadLocations();
   }, []);
 
-  // ---------------- FIXED ANIMATION STATE ----------------
+  // ---------------- SHEET ANIMATION ----------------
   const translateY = React.useRef(new Animated.Value(height)).current;
 
   const openSheet = () => {
     setShowLocations(true);
-
     requestAnimationFrame(() => {
       Animated.spring(translateY, {
         toValue: 0,
@@ -80,18 +76,18 @@ const Homescreen = () => {
       useNativeDriver: true,
     }).start(() => {
       setShowLocations(false);
-      translateY.setValue(height); // reset for next open
+      translateY.setValue(height);
     });
   };
 
+  // Drag handler is attached to the handle area only, so the list
+  // inside the sheet can scroll without fighting the gesture.
   const panResponder = React.useRef(
     PanResponder.create({
-      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 10,
-
+      onStartShouldSetPanResponder: () => true,
       onPanResponderMove: (_, g) => {
         if (g.dy > 0) translateY.setValue(g.dy);
       },
-
       onPanResponderRelease: (_, g) => {
         if (g.dy > 120) {
           closeSheet();
@@ -105,158 +101,139 @@ const Homescreen = () => {
     }),
   ).current;
 
+  // ---------------- RENDER HELPERS ----------------
+  const renderCard = ({
+    item,
+    index,
+  }: {
+    item: (typeof image_layout)[number];
+    index: number;
+  }) => {
+    const isEven = index % 2 === 0;
+
+    return (
+      <Pressable
+        android_ripple={{ color: "#ffffff22" }}
+        style={({ pressed }) => [
+          styles.card,
+          {
+            backgroundColor: item.color,
+            flexDirection: isEven ? "row" : "row-reverse",
+            opacity: pressed ? 0.92 : 1,
+          },
+        ]}
+      >
+        <View style={styles.cardImageWrap}>
+          <Image
+            source={item.image}
+            resizeMode="contain"
+            style={styles.cardImage}
+          />
+        </View>
+
+        <View
+          style={[
+            styles.cardContent,
+            { alignItems: isEven ? "flex-start" : "flex-end" },
+          ]}
+        >
+          <Text
+            style={[styles.cardTitle, { textAlign: isEven ? "left" : "right" }]}
+            numberOfLines={2}
+          >
+            {item.title}
+          </Text>
+
+          <Text
+            style={[styles.cardDesc, { textAlign: isEven ? "left" : "right" }]}
+            numberOfLines={2}
+          >
+            {item.desc}
+          </Text>
+
+          <View style={styles.arrowChip}>
+            <Image
+              source={images.arrowRight}
+              resizeMode="contain"
+              style={styles.arrowIcon}
+            />
+          </View>
+        </View>
+      </Pressable>
+    );
+  };
+
   return (
-    <SafeAreaView style={styles.pageContainer}>
+    <SafeAreaView style={styles.pageContainer} edges={["top"]}>
       <View style={styles.container}>
-        <FlatList
-          showsVerticalScrollIndicator={false}
-          data={image_layout}
-          renderItem={({ item, index }) => {
-            const isEven = index % 2 === 0;
+        {/* ---------------- HEADER ---------------- */}
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <Text style={styles.headerLabel}>DELIVERY POINT</Text>
 
-            return (
-              <Pressable
-                android_ripple={{ color: "#ffffff22" }}
-                style={[
-                  styles.cards,
-                  { backgroundColor: item.color, borderRadius: 20 },
-                  isEven
-                    ? { flexDirection: "row" }
-                    : { flexDirection: "row-reverse" },
-                ]}
-              >
-                <View
-                  style={{
-                    flex: 1,
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Image
-                    source={item.image}
-                    resizeMode="center"
-                    style={{
-                      width: width / 2,
-                      height: height / 7,
-                      marginTop: 10,
-                    }}
-                  />
-                </View>
-
-                <View style={{ gap: 10 }}>
-                  <Text style={styles.title}>{item.title}</Text>
-                  <Image
-                    source={images.arrowRight}
-                    resizeMode="center"
-                    tintColor={"#fff"}
-                  />
-                </View>
-              </Pressable>
-            );
-          }}
-          contentContainerStyle={{
-            paddingHorizontal: 10,
-            paddingVertical: 10,
-            marginBottom: 10,
-          }}
-          ListHeaderComponent={
-            <View
-              style={{
-                backgroundColor: "#9c9c9c22",
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-                height: height / 18,
-                paddingHorizontal: 10,
-                borderRadius: 7,
-              }}
+            <TouchableOpacity
+              style={styles.addressRow}
+              onPress={openSheet}
+              activeOpacity={0.7}
             >
-              <View style={{ alignItems: "center" }}>
-                <Text style={{ fontSize: 12, fontWeight: "bold" }}>
-                  DELIVERY POINT
-                </Text>
+              <Text style={styles.addressText} numberOfLines={1}>
+                {address || "Set delivery address"}
+              </Text>
+              <Image
+                source={images.arrowDown}
+                resizeMode="contain"
+                style={styles.addressChevron}
+              />
+            </TouchableOpacity>
+          </View>
 
-                <TouchableOpacity
-                  style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
-                  onPress={openSheet}
-                >
-                  <Text style={{ fontSize: 10 }}>
-                    {address || "Set delivery address"}
-                  </Text>
-                  <Image
-                    source={images.arrowDown}
-                    resizeMode="center"
-                    tintColor={"#000"}
-                  />
-                </TouchableOpacity>
-              </View>
+          <View style={styles.headerRight}>
+            <CartComponent />
 
-              <View style={{ flexDirection: "row", gap: 10 }}>
-                <CartComponent />
+            <TouchableOpacity
+              onPress={() => router.push("/(tabs)/ProfileScreen")}
+              activeOpacity={0.8}
+            >
+              <Image
+                source={user?.avatar ? { uri: user.avatar } : images.userImage}
+                style={styles.avatar}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
 
-                <TouchableOpacity
-                  onPress={() => router.push("/(tabs)/ProfileScreen")}
-                >
-                  <Image
-                    source={{ uri: user?.avatar }}
-                    style={{ width: 40, height: 40, borderRadius: 20 }}
-                  />
-                </TouchableOpacity>
-              </View>
-            </View>
-          }
+        {/* ---------------- MENU LIST ---------------- */}
+        <FlatList
+          style={styles.list}
+          data={image_layout}
+          keyExtractor={(item) => String(item.id)}
+          renderItem={renderCard}
+          showsVerticalScrollIndicator={false}
+          ItemSeparatorComponent={() => <View style={{ height: SPACING.md }} />}
+          contentContainerStyle={styles.listContent}
         />
 
-        {/* ---------------- SHEET (NO UNMOUNT FLICKER VERSION) ---------------- */}
+        {/* ---------------- PICKUP SHEET ---------------- */}
         {showLocations && (
-          <View
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: "rgba(0,0,0,0.4)",
-              justifyContent: "flex-end",
-            }}
-          >
+          <View style={styles.backdrop}>
+            <Pressable style={StyleSheet.absoluteFill} onPress={closeSheet} />
+
             <Animated.View
-              {...panResponder.panHandlers}
-              style={{
-                transform: [{ translateY }],
-                backgroundColor: "#fff",
-                borderTopLeftRadius: 28,
-                borderTopRightRadius: 28,
-                paddingTop: 10,
-                paddingHorizontal: 20,
-                paddingBottom: 30,
-                maxHeight: height * 0.65,
-              }}
+              style={[
+                styles.sheet,
+                { transform: [{ translateY }], maxHeight: height * 0.65 },
+              ]}
             >
               <View
-                style={{
-                  width: 45,
-                  height: 5,
-                  backgroundColor: "#ccc",
-                  borderRadius: 20,
-                  alignSelf: "center",
-                  marginBottom: 10,
-                }}
-              />
-
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  marginBottom: 10,
-                  alignItems: "center",
-                }}
+                {...panResponder.panHandlers}
+                style={styles.sheetHandleArea}
               >
-                <Text style={{ fontSize: 18, fontWeight: "700" }}>
-                  Select Pickup Point
-                </Text>
+                <View style={styles.sheetHandle} />
+              </View>
 
-                <TouchableOpacity onPress={closeSheet}>
+              <View style={styles.sheetHeader}>
+                <Text style={styles.sheetTitle}>Select pickup point</Text>
+                <TouchableOpacity onPress={closeSheet} hitSlop={12}>
                   <Ionicons name="close" size={24} color="#333" />
                 </TouchableOpacity>
               </View>
@@ -265,23 +242,21 @@ const Homescreen = () => {
                 data={locations}
                 keyExtractor={(item) => item.$id}
                 showsVerticalScrollIndicator={false}
+                ItemSeparatorComponent={() => (
+                  <View style={{ height: SPACING.sm }} />
+                )}
+                contentContainerStyle={{ paddingBottom: SPACING.xl }}
                 renderItem={({ item: loc }) => (
                   <TouchableOpacity
+                    activeOpacity={0.7}
                     onPress={() => {
                       handleSelectAddress(loc.address);
                       closeSheet();
                     }}
-                    style={{
-                      padding: 14,
-                      borderRadius: 14,
-                      backgroundColor: "#f7f7f7",
-                      marginBottom: 10,
-                    }}
+                    style={styles.locationItem}
                   >
-                    <Text style={{ fontWeight: "600" }}>{loc.name}</Text>
-                    <Text style={{ fontSize: 12, color: "#666" }}>
-                      {loc.address}
-                    </Text>
+                    <Text style={styles.locationName}>{loc.name}</Text>
+                    <Text style={styles.locationAddress}>{loc.address}</Text>
                   </TouchableOpacity>
                 )}
               />
@@ -296,48 +271,169 @@ const Homescreen = () => {
 const styles = StyleSheet.create({
   pageContainer: {
     flex: 1,
-    //padding: 1,
-    backgroundColor: "#9c9c9c22",
+    backgroundColor: "#fff",
   },
   container: {
     flex: 1,
-    alignItems: "center",
-    //justifyContent: "center",
     backgroundColor: "#fff",
-    //borderRadius: 7,
-    //borderCurve: "circular",
   },
-  text: {
-    color: "#000",
-    fontSize: 20,
-    fontWeight: "bold",
+
+  // Header
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginHorizontal: SPACING.lg,
+    marginTop: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    backgroundColor: "#9c9c9c22",
+    borderRadius: RADIUS.md,
   },
-  title: {
+  headerLeft: {
+    flex: 1,
+    marginRight: SPACING.md,
+    gap: SPACING.xs,
+  },
+  headerLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+  },
+  addressRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.xs,
+  },
+  addressText: {
+    flexShrink: 1,
+    fontSize: 12,
+    color: "#444",
+  },
+  addressChevron: {
+    width: 12,
+    height: 12,
+    tintColor: "#000",
+  },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.md,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#e5e5e5",
+  },
+
+  // List
+  list: {
+    flex: 1,
+  },
+  listContent: {
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.lg,
+    paddingBottom: SPACING.xl,
+  },
+
+  // Card
+  card: {
+    height: CARD_HEIGHT,
+    alignItems: "center",
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    gap: SPACING.lg,
+    borderRadius: RADIUS.lg,
+    overflow: "hidden",
+  },
+  cardImageWrap: {
+    flex: 1,
+    height: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cardImage: {
+    width: "100%",
+    height: "100%",
+  },
+  cardContent: {
+    flex: 1,
+    justifyContent: "center",
+    gap: SPACING.sm,
+  },
+  cardTitle: {
     fontSize: 20,
-    fontWeight: "bold",
-    textAlign: "center",
+    lineHeight: 26,
     color: "#fff",
     fontFamily: "PlayfairDisplay-Bold",
-    //lineHeight: 20,
   },
-  desc: {
-    fontSize: 10,
-    textAlign: "center",
-    color: "red",
+  cardDesc: {
+    fontSize: 12,
+    lineHeight: 17,
+    color: "rgba(255,255,255,0.85)",
     fontFamily: "PlayfairDisplay-Regular",
+    letterSpacing: 0.2,
   },
-  cards: {
-    width: width - 20,
-    height: height / 7,
-    padding: 20,
-    //borderTopEndRadius: 12,
-    //borderBottomStartRadius: 12,
-    //overflow: "hidden",
-    //flex: 1,
-    //alignItems: "center",
-    gap: 20,
-    marginVertical: 4,
-    //marginHorizontal: 5,
+  arrowChip: {
+    width: 50,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#ffffff33",
+  },
+  arrowIcon: {
+    width: 40,
+    height: 30,
+    tintColor: "#fff",
+  },
+
+  // Sheet
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "flex-end",
+  },
+  sheet: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: RADIUS.sheet,
+    borderTopRightRadius: RADIUS.sheet,
+    paddingHorizontal: SPACING.xl,
+  },
+  sheetHandleArea: {
+    alignItems: "center",
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.md,
+  },
+  sheetHandle: {
+    width: 45,
+    height: 5,
+    borderRadius: 20,
+    backgroundColor: "#ccc",
+  },
+  sheetHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: SPACING.lg,
+  },
+  sheetTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  locationItem: {
+    padding: SPACING.lg,
+    borderRadius: RADIUS.md,
+    backgroundColor: "#f7f7f7",
+    gap: SPACING.xs,
+  },
+  locationName: {
+    fontWeight: "600",
+  },
+  locationAddress: {
+    fontSize: 12,
+    color: "#666",
   },
 });
 
