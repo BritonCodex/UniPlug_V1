@@ -1,75 +1,54 @@
 import { images } from "@/constants/images";
 import { CartItemType } from "@/constants/props";
 import { useCartStore } from "@/store/cart.store";
-import {
-  Dimensions,
-  Image,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-const { width, height } = Dimensions.get("screen");
 const CartItem = ({ item }: { item: CartItemType }) => {
   const { increaseQty, decreaseQty, removeItem } = useCartStore();
+
   return (
-    <View
-      style={{
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: 10,
-        //backgroundColor: "red",
-        borderRadius: 10,
-      }}
-    >
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-        <Image
-          source={{ uri: item.image_url }}
-          resizeMode="cover"
-          style={{ width: 80, height: 80, borderRadius: 10 }}
-        />
-        <View style={{ flexDirection: "column", gap: 5 }}>
-          <Text style={{ fontSize: 14, fontWeight: "bold" }}>{item.name}</Text>
-          <Text style={{ fontSize: 14, fontWeight: "bold" }}>
-            Ksh.{item.price}
+    <View style={styles.row}>
+      <Image
+        source={{ uri: item.image_url }}
+        resizeMode="cover"
+        style={styles.image}
+      />
+
+      {/* Name, price, then the stepper underneath */}
+      <View style={styles.details}>
+        <View style={styles.textBlock}>
+          <Text style={styles.name} numberOfLines={2}>
+            {item.name}
           </Text>
+          <Text style={styles.price}>Ksh.{item.price}</Text>
         </View>
 
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 10,
-          }}
-        >
+        <View style={styles.stepper}>
           <TouchableOpacity
             onPress={() => decreaseQty(item.id, item.customizations!)}
-            style={styles.touchable}
+            style={styles.stepBtn}
+            activeOpacity={0.7}
+            hitSlop={6}
           >
             <Image
               source={images.minusImge}
-              resizeMode="center"
-              style={{
-                width: width / width + 15,
-                height: height / height + 15,
-              }}
+              resizeMode="contain"
+              style={styles.stepIcon}
             />
           </TouchableOpacity>
-          <Text>{item.quantity}</Text>
+
+          <Text style={styles.qty}>{item.quantity}</Text>
+
           <TouchableOpacity
             onPress={() => increaseQty(item.id, item.customizations!)}
-            style={styles.touchable}
+            style={styles.stepBtn}
+            activeOpacity={0.7}
+            hitSlop={6}
           >
             <Image
               source={images.plusImage}
-              resizeMode="center"
-              style={{
-                width: width / width + 15,
-                height: height / height + 15,
-              }}
+              resizeMode="contain"
+              style={styles.stepIcon}
             />
           </TouchableOpacity>
         </View>
@@ -77,19 +56,75 @@ const CartItem = ({ item }: { item: CartItemType }) => {
 
       <TouchableOpacity
         onPress={() => removeItem(item.id, item.customizations!)}
-        style={styles.touchable}
+        style={[styles.stepBtn, styles.trashBtn]}
+        activeOpacity={0.7}
+        hitSlop={6}
       >
-        <Image source={images.trashImage} resizeMode="center" />
+        <Image
+          source={images.trashImage}
+          resizeMode="contain"
+          style={styles.stepIcon}
+        />
       </TouchableOpacity>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  touchable: {
-    backgroundColor: "#9c9c9c22",
-    padding: 5,
+  row: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    padding: 10,
     borderRadius: 10,
+  },
+  image: {
+    width: 88,
+    height: 88,
+    borderRadius: 12,
+  },
+  details: {
+    flex: 1, // takes the space between the image and the trash button
+    gap: 10,
+  },
+  textBlock: {
+    gap: 4,
+  },
+  name: {
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  price: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#FF8F3A",
+  },
+  stepper: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    gap: 12,
+  },
+  qty: {
+    minWidth: 20,
+    textAlign: "center",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  stepBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: "#9c9c9c22",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  trashBtn: {
+    alignSelf: "center", // vertically centred on the right edge of the item
+  },
+  stepIcon: {
+    width: 16,
+    height: 16,
   },
 });
 

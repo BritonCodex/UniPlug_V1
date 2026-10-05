@@ -2,19 +2,15 @@ import CartItem from "@/components/CartItem";
 import CrossLoader from "@/components/CrossLoader";
 import CustomButton from "@/components/CustomButton";
 import CustomHeaderComponent from "@/components/CustomHeaderComponent";
-import { CartItemType, PaymentInfoProps } from "@/constants/props";
+import MpesaPaymentModal from "@/components/MpesaPaymentModal";
+import { PaymentInfoProps } from "@/constants/props";
+import { computeTotal, DELIVERY_FEE, DISCOUNT } from "@/lib/mpesa";
 import { useCartStore } from "@/store/cart.store";
 import React from "react";
-import { Dimensions, FlatList, StyleSheet, Text, View } from "react-native";
+import { FlatList, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const { height, width } = Dimensions.get("screen");
-const PaymentInfo = ({
-  label,
-  value,
-  labelStyle,
-  valueStyle,
-}: PaymentInfoProps) => {
+const PaymentInfo = ({ label, value }: PaymentInfoProps) => {
   return (
     <View
       style={{
@@ -23,35 +19,43 @@ const PaymentInfo = ({
         marginVertical: 10,
       }}
     >
-      <Text
-        style={[
-          { fontSize: 14, color: "black", fontWeight: 200 },
-          {
-            /*labelStyle*/
-          },
-        ]}
-      >
+      <Text style={{ fontSize: 14, color: "black", fontWeight: "400" }}>
         {label}
       </Text>
-      <Text
-        style={[
-          { fontSize: 14, color: "black", fontWeight: 200 },
-          {
-            /*valueStyle*/
-          },
-        ]}
-      >
+      <Text style={{ fontSize: 14, color: "black", fontWeight: "400" }}>
         {value}
       </Text>
     </View>
   );
 };
-const CartScreen = ({ item }: { item: CartItemType }) => {
-  const { items, getTotalItems, getTotalPrice } = useCartStore();
+
+const CartScreen = () => {
+  const { items, getTotalItems, getTotalPrice, clearCart } = useCartStore();
+  const [showPayment, setShowPayment] = React.useState(false);
+
   const totalItems = getTotalItems();
-  const totalPrice = getTotalPrice();
+
+  // Use the store's total when it's a real number; otherwise sum the lines here.
+  // Adjust `price` / `quantity` if your CartItemType names them differently.
+  const storeTotal = Number(getTotalPrice());
+  const lineTotal = items.reduce(
+    (sum, it: any) => sum + (Number(it.price) || 0) * (Number(it.quantity) || 1),
+    0,
+  );
+  const totalPrice = storeTotal > 0 ? storeTotal : lineTotal;
+
+  // Dev-only: shows why a total comes out as 0.
+  React.useEffect(() => {
+    if (__DEV__) {
+      console.log("[cart] store total:", getTotalPrice(), "| line total:", lineTotal);
+      console.log("[cart] first item:", JSON.stringify(items[0]));
+    }
+  }, [items]);
+  // Same function the payment modal and the server use, so the screen shows what M-Pesa charges.
+  const grandTotal = computeTotal(totalPrice);
+
   return (
-    <SafeAreaView style={{ flex: 1, height, width }}>
+    <SafeAreaView style={{ flex: 1 }}>
       <FlatList
         data={items}
         renderItem={({ item }) => <CartItem item={item} />}
@@ -66,20 +70,17 @@ const CartScreen = ({ item }: { item: CartItemType }) => {
           <CustomHeaderComponent title="Cart" imageShow={true} />
         )}
         ListEmptyComponent={() => (
-          // <View style={styles.emptyContainer}>
-          //   <PulseLoader />
-          // </View>
           <View
             style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
           >
             <CrossLoader />
             <Text style={{ marginTop: 10, color: "#6666668f", fontSize: 14 }}>
-              Loading your cart...
+              Your cart is empty
             </Text>
           </View>
         )}
         ListFooterComponent={() =>
-          totalItems > 0 && (
+          totalItems > 0 ? (
             <View style={{ gap: 5 }}>
               <View
                 style={{
@@ -102,12 +103,11 @@ const CartScreen = ({ item }: { item: CartItemType }) => {
                   label={`Total Items (${totalItems})`}
                   value={`Ksh.${totalPrice.toFixed(2)}`}
                 />
-                <PaymentInfo label={`Delivery Fee`} value={`Ksh.200`} />
                 <PaymentInfo
-                  label={`Discount`}
-                  value={`-Ksh.10`}
-                  // valueStyle="!text-success"
+                  label="Delivery Fee"
+                  value={`Ksh.${DELIVERY_FEE}`}
                 />
+                <PaymentInfo label="Discount" value={`-Ksh.${DISCOUNT}`} />
 
                 <View
                   style={{
@@ -121,17 +121,18 @@ const CartScreen = ({ item }: { item: CartItemType }) => {
                 />
 
                 <PaymentInfo
-                  label={`Total`}
-                  value={`Ksh.${(totalPrice + 50 - 10).toFixed(2)}`}
+                  label="Total"
+                  value={`Ksh.${grandTotal.toFixed(2)}`}
                 />
               </View>
 
+              {/* Assumes CustomButton accepts an onPress prop. */}
               <CustomButton
-                text="OrderNow"
+                text="Order now"
+                onPress={() => setShowPayment(true)}
                 buttonStyles={{
                   backgroundColor: "#FF8F3A",
-                  width: width / 1.1,
-                  marginHorizontal: 20,
+                  width: "100%",
                   alignSelf: "center",
                 }}
                 textStyles={{
@@ -140,20 +141,18 @@ const CartScreen = ({ item }: { item: CartItemType }) => {
                 }}
               />
             </View>
-          )
+          ) : null
         }
       />
-      {/* <FavouriteComponent onPress={(e) => console.log("set fav")} size={20} /> */}
+
+      <MpesaPaymentModal
+        visible={showPayment}
+        amount={grandTotal}
+        onClose={() => setShowPayment(false)}
+        onPaid={() => clearCart()}
+      />
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  // emptyContainer: {
-  //   flex: 1,
-  //   justifyContent: "center",
-  //   alignItems: "center",
-  // },
-});
 
 export default CartScreen;
