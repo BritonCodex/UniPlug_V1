@@ -4,6 +4,7 @@ import CustomButton from "@/components/CustomButton";
 import CustomHeaderComponent from "@/components/CustomHeaderComponent";
 import MpesaPaymentModal from "@/components/MpesaPaymentModal";
 import { PaymentInfoProps } from "@/constants/props";
+import { lineTotal } from "@/lib/cartMath";
 import { computeTotal, DELIVERY_FEE, DISCOUNT } from "@/lib/mpesa";
 import { useCartStore } from "@/store/cart.store";
 import React from "react";
@@ -35,22 +36,21 @@ const CartScreen = () => {
 
   const totalItems = getTotalItems();
 
-  // Use the store's total when it's a real number; otherwise sum the lines here.
-  // Adjust `price` / `quantity` if your CartItemType names them differently.
-  const storeTotal = Number(getTotalPrice());
-  const lineTotal = items.reduce(
-    (sum, it: any) => sum + (Number(it.price) || 0) * (Number(it.quantity) || 1),
-    0,
-  );
-  const totalPrice = storeTotal > 0 ? storeTotal : lineTotal;
+  // Sum the lines here: (base price + toppings/sides) x quantity. This matches what each
+  // cart item shows and what M-Pesa will charge, whatever the store's own total does.
+  const totalPrice = items.reduce((sum, it) => sum + lineTotal(it as any), 0);
 
-  // Dev-only: shows why a total comes out as 0.
+  // Dev-only: compare with the store's own total.
   React.useEffect(() => {
-    if (__DEV__) {
-      console.log("[cart] store total:", getTotalPrice(), "| line total:", lineTotal);
-      console.log("[cart] first item:", JSON.stringify(items[0]));
-    }
+    if (__DEV__)
+      console.log(
+        "[cart] store total:",
+        getTotalPrice(),
+        "| screen total:",
+        totalPrice,
+      );
   }, [items]);
+
   // Same function the payment modal and the server use, so the screen shows what M-Pesa charges.
   const grandTotal = computeTotal(totalPrice);
 

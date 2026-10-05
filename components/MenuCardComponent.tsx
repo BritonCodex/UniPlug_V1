@@ -1,6 +1,7 @@
 import { MenuItem } from "@/constants/props";
 import { appwriteConfig } from "@/lib/appwrite";
 import { useCartStore } from "@/store/cart.store";
+import { router } from "expo-router";
 import React from "react";
 import {
   Dimensions,
@@ -22,6 +23,10 @@ const MenuCardComponent = ({
   const { addItem } = useCartStore();
   return (
     <TouchableOpacity
+      activeOpacity={0.9}
+      onPress={() =>
+        router.push({ pathname: "/product/[id]", params: { id: $id } })
+      }
       style={[
         {
           backgroundColor: "#ffffff",
