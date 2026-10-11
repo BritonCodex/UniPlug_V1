@@ -24,7 +24,11 @@ type Props = {
   visible: boolean;
   amount: number; // whole shillings, from the cart
   onClose: () => void;
-  onPaid: (info: { checkoutRequestId: string; receipt?: string }) => void;
+  onPaid: (info: {
+    checkoutRequestId: string;
+    receipt?: string;
+    phone: string;
+  }) => void;
 };
 
 const MpesaPaymentModal = ({ visible, amount, onClose, onPaid }: Props) => {
@@ -47,10 +51,8 @@ const MpesaPaymentModal = ({ visible, amount, onClose, onPaid }: Props) => {
 
   const handleClose = () => {
     if (busy) return; // a prompt is already on the customer's phone
-    if (phase !== "success") {
-      setPhase("input");
-      setMessage("");
-    }
+    setPhase("input");
+    setMessage("");
     onClose();
   };
 
@@ -89,7 +91,7 @@ const MpesaPaymentModal = ({ visible, amount, onClose, onPaid }: Props) => {
       if (outcome.status === "success") {
         setReceipt(outcome.receipt);
         setPhase("success");
-        onPaid({ checkoutRequestId, receipt: outcome.receipt });
+        onPaid({ checkoutRequestId, receipt: outcome.receipt, phone: msisdn });
       } else if (outcome.status === "failed") {
         setPhase("failed");
         setMessage(outcome.message);
@@ -130,7 +132,7 @@ const MpesaPaymentModal = ({ visible, amount, onClose, onPaid }: Props) => {
               <Text style={styles.title}>Payment received</Text>
               {!!receipt && <Text style={styles.body}>Receipt: {receipt}</Text>}
               <Pressable style={styles.primaryBtn} onPress={handleClose}>
-                <Text style={styles.primaryText}>Done</Text>
+                <Text style={styles.primaryText}>View my order</Text>
               </Pressable>
             </View>
           ) : busy ? (

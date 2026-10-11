@@ -6,9 +6,13 @@ import MpesaPaymentModal from "@/components/MpesaPaymentModal";
 import { PaymentInfoProps } from "@/constants/props";
 import { lineTotal } from "@/lib/cartMath";
 import { computeTotal, DELIVERY_FEE, DISCOUNT } from "@/lib/mpesa";
+import { createOrder } from "@/lib/orders";
+import { useAddressStore } from "@/store/address.sore";
+import useAuthStore from "@/store/auth.store";
 import { useCartStore } from "@/store/cart.store";
+import { router } from "expo-router";
 import React from "react";
-import { FlatList, Text, View } from "react-native";
+import { Alert, FlatList, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const PaymentInfo = ({ label, value }: PaymentInfoProps) => {
@@ -53,6 +57,64 @@ const CartScreen = () => {
 
   // Same function the payment modal and the server use, so the screen shows what M-Pesa charges.
   const grandTotal = computeTotal(totalPrice);
+
+  const { user } = useAuthStore();
+  const { address } = useAddressStore();
+  const orderPromise = React.useRef<Promise<string | null> | null>(null);
+
+  // Runs once M-Pesa confirms payment: snapshot the cart into an order, then empty the cart.
+  const handlePaid = ({
+    receipt,
+    phone,
+  }: {
+    checkoutRequestId: string;
+    receipt?: string;
+    phone: string;
+  }) => {
+    const snapshot = items;
+    orderPromise.current = (async () => {
+      try {
+        const u: any = user;
+        const order = await createOrder({
+          userId: u!.$id,
+          accountId: u?.accountId,
+          customerName: u?.name,
+          customerEmail: u?.email,
+          phoneNumber: `+${phone}`,
+          address: address ?? "",
+          items: snapshot,
+          totalPrice: grandTotal,
+          transactionCode: receipt || "N/A",
+        });
+        return order.$id as string;
+      } catch (e) {
+        if (__DEV__) console.log("[order] create failed:", e);
+        Alert.alert(
+          "Payment received",
+          `Your M-Pesa payment went through${receipt ? ` (receipt ${receipt})` : ""}, but we couldn't save the order. Please contact support with that receipt.` +
+            (__DEV__ ? `\n\nDev: ${(e as any)?.message ?? String(e)}` : ""),
+        );
+        return null;
+      } finally {
+        clearCart();
+      }
+    })();
+  };
+
+  // "View my order" closes the modal, then opens the order screen.
+  const handleModalClose = async () => {
+    setShowPayment(false);
+    const pending = orderPromise.current;
+    if (!pending) return;
+    orderPromise.current = null;
+    const orderId = await pending;
+    if (__DEV__) console.log("[order] opening order screen:", orderId);
+    if (!orderId) return;
+    // Let the modal finish closing first; navigating mid-dismiss can be ignored.
+    setTimeout(() => {
+      router.push({ pathname: "/order/[id]", params: { id: orderId } } as any);
+    }, 350);
+  };
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -148,8 +210,8 @@ const CartScreen = () => {
       <MpesaPaymentModal
         visible={showPayment}
         amount={grandTotal}
-        onClose={() => setShowPayment(false)}
-        onPaid={() => clearCart()}
+        onClose={handleModalClose}
+        onPaid={handlePaid}
       />
     </SafeAreaView>
   );

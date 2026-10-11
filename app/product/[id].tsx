@@ -1,6 +1,6 @@
 import { images } from "@/constants/images";
 import { appwriteConfig } from "@/lib/appwrite";
-import { getCustomizations, getMenuItem, pickOptions } from "@/lib/menu";
+import { getMenuItem, getOptionsForItem } from "@/lib/menu";
 import { useCartStore } from "@/store/cart.store";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import React from "react";
@@ -109,14 +109,12 @@ const ProductDetails = () => {
     let alive = true;
     (async () => {
       try {
-        const [menuItem, allCustomizations] = await Promise.all([
-          getMenuItem(id),
-          getCustomizations(),
-        ]);
+        const menuItem = await getMenuItem(id);
+        const opts = await getOptionsForItem(menuItem);
         if (!alive) return;
 
         setItem(menuItem);
-        setOptions(pickOptions(menuItem, allCustomizations) as any);
+        setOptions(opts as any);
       } catch {
         if (alive)
           setError(

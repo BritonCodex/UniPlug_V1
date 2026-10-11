@@ -19,8 +19,8 @@ const POLL_INTERVAL_MS = 3000;
 const POLL_TIMEOUT_MS = 90_000;
 
 // One source of truth for what the cart shows and what gets charged.
-export const DELIVERY_FEE = 200;
-export const DISCOUNT = 10;
+export const DELIVERY_FEE = 0;
+export const DISCOUNT = 0;
 export const computeTotal = (subtotal: number) =>
   subtotal > 0
     ? Math.max(0, Math.round(subtotal + DELIVERY_FEE - DISCOUNT))
