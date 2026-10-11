@@ -1,20 +1,17 @@
+import AdminOrdersLink from "@/components/AdminOrdersLink";
 import CustomButton from "@/components/CustomButton";
 import CustomHeaderComponent from "@/components/CustomHeaderComponent";
 import ProfileFieldCard from "@/components/ProfileComponent";
+import ProfileRow from "@/components/ProfileRow";
+import { images } from "@/constants/images";
 import useAuthStore from "@/store/auth.store";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import React from "react";
-import {
-  Dimensions,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const { width } = Dimensions.get("screen");
+const ORANGE = "#FF8F3A";
 
 const ProfileScreen = () => {
   const { user } = useAuthStore();
@@ -25,63 +22,70 @@ const ProfileScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.containerWrapper}>
-      <View style={styles.backgroundGlow} />
+    <SafeAreaView style={styles.page}>
+      <View style={styles.glow} />
 
       <ScrollView
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
       >
-        {/* HEADER */}
-        <View style={styles.header}>
-          <CustomHeaderComponent title="Profile" imageShow={false} />
+        <CustomHeaderComponent title="Profile" imageShow={false} />
 
-          {/* PROFILE CARD */}
-          <View style={styles.profileCard}>
-            <View style={styles.avatarWrapper}>
-              <Image
-                source={{ uri: user?.avatar }}
-                style={styles.profileImage}
-              />
-              <View style={styles.onlineDot} />
-            </View>
-
-            <Text style={styles.nameText}>{user?.name}</Text>
-            <Text style={styles.emailText}>{user?.email}</Text>
+        {/* PROFILE CARD */}
+        <View style={styles.profileCard}>
+          <View style={styles.avatarWrapper}>
+            <Image
+              source={user?.avatar ? { uri: user.avatar } : images.userImage}
+              style={styles.avatar}
+            />
+            <View style={styles.onlineDot} />
           </View>
+
+          <Text style={styles.name}>{user?.name}</Text>
+          <Text style={styles.email}>{user?.email}</Text>
         </View>
 
-        {/* INFO SECTION */}
-        <View style={styles.profileContent}>
+        {/* ACCOUNT DETAILS */}
+        <Text style={styles.sectionTitle}>Account details</Text>
+        <View style={styles.fields}>
           <ProfileFieldCard
             label="Name"
-            value={user?.name || ""}
-            icon={<Feather name="user" size={18} color="#6C63FF" />}
+            value={user?.name || "Not set"}
+            icon={<Feather name="user" size={18} color={ORANGE} />}
           />
-
           <ProfileFieldCard
             label="Email"
-            value={user?.email || ""}
+            value={user?.email || "Not set"}
             icon={
-              <MaterialCommunityIcons name="email" size={18} color="#6C63FF" />
+              <MaterialCommunityIcons name="email" size={18} color={ORANGE} />
             }
           />
-
           <ProfileFieldCard
             label="Phone Number"
-            value={user?.phoneNumber || ""}
-            icon={<Feather name="phone" size={18} color="#6C63FF" />}
+            value={user?.phoneNumber || "Not set"}
+            icon={<Feather name="phone" size={18} color={ORANGE} />}
           />
-
           <ProfileFieldCard
             label="Address"
-            value={user?.address || ""}
-            icon={<Feather name="map-pin" size={18} color="#6C63FF" />}
+            value={user?.address || "Not set"}
+            icon={<Feather name="map-pin" size={18} color={ORANGE} />}
           />
         </View>
 
-        {/* ACTION */}
-        <View style={styles.actionButtons}>
+        {/* SHORTCUTS */}
+        <Text style={styles.sectionTitle}>Orders</Text>
+        <View style={styles.rows}>
+          <ProfileRow
+            icon="shopping-bag"
+            label="My orders"
+            subtitle="Track and review your orders"
+            onPress={() => router.push("/orders" as any)}
+          />
+          <AdminOrdersLink />
+        </View>
+
+        {/* SIGN OUT */}
+        <View style={styles.signOut}>
           <CustomButton
             text="Sign Out"
             onPress={handleLogout}
@@ -90,10 +94,10 @@ const ProfileScreen = () => {
           />
         </View>
 
-        {/* 👇 PREMIUM FOOTER (ADDED ONLY PART) */}
+        {/* FOOTER */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>UniPlug • Version 1.0.0</Text>
-          <Text style={styles.footerSubText}>
+          <Text style={styles.footerSub}>
             © 2026 UniPlug. All rights reserved. Developed by Briton Kiptoo.
           </Text>
         </View>
@@ -103,60 +107,44 @@ const ProfileScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  containerWrapper: {
-    flex: 1,
-    backgroundColor: "#F6F7FB",
-  },
+  page: { flex: 1, backgroundColor: "#f6f6f6" },
 
-  backgroundGlow: {
+  glow: {
     position: "absolute",
     top: -120,
     left: -120,
     width: 300,
     height: 300,
-    backgroundColor: "#6C63FF",
-    opacity: 0.08,
     borderRadius: 150,
+    backgroundColor: ORANGE,
+    opacity: 0.12,
   },
 
-  container: {
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 40,
-  },
-
-  header: {
-    marginBottom: 18,
-  },
+  // Extra bottom padding so the floating tab bar never covers the footer.
+  container: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 110 },
 
   profileCard: {
     alignItems: "center",
-    marginTop: 18,
+    marginTop: 16,
     paddingVertical: 22,
     paddingHorizontal: 16,
     borderRadius: 22,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#ECECF3",
+    backgroundColor: "#fff",
     shadowColor: "#000",
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.06,
     shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
+    shadowOffset: { width: 0, height: 5 },
     elevation: 3,
   },
-
-  avatarWrapper: {
-    position: "relative",
-  },
-
-  profileImage: {
+  avatarWrapper: { position: "relative" },
+  avatar: {
     width: 92,
     height: 92,
     borderRadius: 46,
-    borderWidth: 2,
-    borderColor: "#6C63FF",
+    borderWidth: 3,
+    borderColor: ORANGE,
+    backgroundColor: "#eee",
   },
-
   onlineDot: {
     position: "absolute",
     bottom: 6,
@@ -164,70 +152,45 @@ const styles = StyleSheet.create({
     width: 14,
     height: 14,
     borderRadius: 7,
-    backgroundColor: "#2EE59D",
+    backgroundColor: "#2ecc71",
     borderWidth: 2,
     borderColor: "#fff",
   },
+  name: { marginTop: 12, fontSize: 19, fontWeight: "800", color: "#111" },
+  email: { fontSize: 13, color: "#777", marginTop: 2 },
 
-  nameText: {
-    marginTop: 10,
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#1A1A1A",
-  },
-
-  emailText: {
+  sectionTitle: {
+    marginTop: 24,
+    marginBottom: 10,
+    marginLeft: 4,
     fontSize: 13,
-    color: "#777",
-    marginTop: 2,
+    fontWeight: "800",
+    color: "#3B2D2A",
+    letterSpacing: 0.4,
+    textTransform: "uppercase",
   },
+  fields: { alignItems: "center", gap: 12 },
+  rows: { gap: 12 },
 
-  profileContent: {
-    alignItems: "center",
-    marginTop: 18,
-    gap: 12,
-  },
-
-  actionButtons: {
-    marginTop: 28,
-    alignItems: "center",
-  },
-
+  signOut: { marginTop: 28 },
   logoutButton: {
-    backgroundColor: "#FF3B30",
-    width: width * 0.88,
-    borderRadius: 14,
-    shadowColor: "#FF3B30",
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 2,
+    width: "100%",
+    alignSelf: "center",
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#e74c3c55",
+    borderRadius: 16,
   },
+  logoutText: { color: "#e74c3c", fontWeight: "800" },
 
-  logoutText: {
-    color: "#fff",
-    fontWeight: "700",
-  },
-
-  /* ✅ NEW PREMIUM FOOTER */
-  footer: {
-    marginTop: 35,
-    alignItems: "center",
-    paddingBottom: 20,
-  },
-
+  footer: { marginTop: 32, alignItems: "center", paddingBottom: 12 },
   footerText: {
     fontSize: 12,
     fontWeight: "600",
     color: "#888",
     letterSpacing: 0.5,
   },
-
-  footerSubText: {
-    fontSize: 10,
-    color: "#aaa",
-    marginTop: 4,
-    textAlign: "center",
-  },
+  footerSub: { fontSize: 10, color: "#aaa", marginTop: 4, textAlign: "center" },
 });
 
 export default ProfileScreen;

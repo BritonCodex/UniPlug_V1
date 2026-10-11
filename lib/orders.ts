@@ -1,5 +1,5 @@
 import { ID, Permission, Query, Role } from "react-native-appwrite";
-import { appwriteConfig, databases } from "./appwrite";
+import { account, appwriteConfig, databases } from "./appwrite";
 
 const DATABASE_ID = appwriteConfig.databaseId;
 const ORDERS_TABLE_ID = appwriteConfig.orderCollectionId;
@@ -16,33 +16,15 @@ export const ORDER_STATUS = {
 
 // Your status enum: pending, verified, processing, shipped, delivered, cancelled, failed
 export const isFailedStatus = (status?: string) =>
-  ["cancelled", "canceled", "failed"].includes(
-    String(status ?? "").toLowerCase(),
-  );
+  ["cancelled", "canceled", "failed"].includes(String(status ?? "").toLowerCase());
 
 // Which of the 4 tracker steps a status belongs to:
 // pending/verified -> 0 placed, processing -> 1 preparing, shipped -> 2 on the way, delivered -> 3.
 export const stepIndexForStatus = (status?: string) => {
-  const s = String(status ?? "")
-    .toLowerCase()
-    .replace(/[\s-]+/g, "_");
+  const s = String(status ?? "").toLowerCase().replace(/[\s-]+/g, "_");
   if (["delivered", "completed", "complete"].includes(s)) return 3;
-  if (
-    [
-      "on_the_way",
-      "out_for_delivery",
-      "dispatched",
-      "shipped",
-      "delivering",
-    ].includes(s)
-  )
-    return 2;
-  if (
-    ["preparing", "cooking", "processing", "in_progress", "accepted"].includes(
-      s,
-    )
-  )
-    return 1;
+  if (["on_the_way", "out_for_delivery", "dispatched", "shipped", "delivering"].includes(s)) return 2;
+  if (["preparing", "cooking", "processing", "in_progress", "accepted"].includes(s)) return 1;
   return 0;
 };
 
@@ -66,10 +48,7 @@ export async function createOrder(p: {
         price: it.price,
         quantity: it.quantity,
         ...(withImages ? { image_url: it.image_url } : {}),
-        customizations: (it.customizations ?? []).map((c: any) => ({
-          name: c.name,
-          price: c.price,
-        })),
+        customizations: (it.customizations ?? []).map((c: any) => ({ name: c.name, price: c.price })),
       })),
     );
   let items = compact(true);
@@ -89,18 +68,10 @@ export async function createOrder(p: {
   if (p.customerEmail) data.customerEmail = p.customerEmail;
 
   // Only set row permissions when we know the auth account id; otherwise rely on the table's own Security settings.
-  const permissions = p.accountId
-    ? [Permission.read(Role.user(p.accountId))]
-    : undefined;
+  const permissions = p.accountId ? [Permission.read(Role.user(p.accountId))] : undefined;
 
   try {
-    return await databases.createDocument(
-      DATABASE_ID,
-      ORDERS_TABLE_ID,
-      ID.unique(),
-      data,
-      permissions,
-    );
+    return await databases.createDocument(DATABASE_ID, ORDERS_TABLE_ID, ID.unique(), data, permissions);
   } catch (e) {
     if (__DEV__) console.log("[order] rejected payload:", JSON.stringify(data));
     throw e;
@@ -108,11 +79,7 @@ export async function createOrder(p: {
 }
 
 export async function getOrder(id: string) {
-  const doc: any = await databases.getDocument(
-    DATABASE_ID,
-    ORDERS_TABLE_ID,
-    id,
-  );
+  const doc: any = await databases.getDocument(DATABASE_ID, ORDERS_TABLE_ID, id);
   let items: any[] = [];
   try {
     items = JSON.parse(doc.items || "[]");
@@ -136,11 +103,7 @@ export async function getMyOrders(userRowId: string) {
     docs = res.documents;
   } catch {
     // Some Appwrite versions can't filter on a relationship column; filter below instead.
-    const res = await databases.listDocuments(
-      DATABASE_ID,
-      ORDERS_TABLE_ID,
-      base,
-    );
+    const res = await databases.listDocuments(DATABASE_ID, ORDERS_TABLE_ID, base);
     docs = res.documents;
   }
 
@@ -158,4 +121,45 @@ export async function getMyOrders(userRowId: string) {
       }
       return { ...o, items };
     });
+}
+
+// ---- Admin side: move orders through their statuses ---------------------------------
+
+// Exact values from your status enum.
+export const STATUS_VALUE = {
+  preparing: "processing",
+  on_the_way: "shipped",
+  delivered: "delivered",
+  cancelled: "cancelled",
+} as const;
+
+// An admin is an Appwrite account that has the label "admin" (Auth -> Users -> Labels).
+export async function isAdmin() {
+  try {
+    const acc: any = await account.get();
+    return (acc.labels ?? []).includes("admin");
+  } catch {
+    return false;
+  }
+}
+
+// Every order, newest first. Only works for accounts the table lets read all rows.
+export async function getAllOrders() {
+  const res = await databases.listDocuments(DATABASE_ID, ORDERS_TABLE_ID, [
+    Query.orderDesc("$createdAt"),
+    Query.limit(100),
+  ]);
+  return res.documents.map((o: any) => {
+    let items: any[] = [];
+    try {
+      items = JSON.parse(o.items || "[]");
+    } catch {
+      // ignore unreadable snapshot
+    }
+    return { ...o, items };
+  });
+}
+
+export async function updateOrderStatus(orderId: string, status: string) {
+  return databases.updateDocument(DATABASE_ID, ORDERS_TABLE_ID, orderId, { status });
 }
