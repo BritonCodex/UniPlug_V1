@@ -23,6 +23,7 @@ type Phase =
 type Props = {
   visible: boolean;
   amount: number; // whole shillings, from the cart
+  defaultPhone?: string; // saved on the profile, e.g. +254712345678
   onClose: () => void;
   onPaid: (info: {
     checkoutRequestId: string;
@@ -31,11 +32,24 @@ type Props = {
   }) => void;
 };
 
-const MpesaPaymentModal = ({ visible, amount, onClose, onPaid }: Props) => {
+const MpesaPaymentModal = ({
+  visible,
+  amount,
+  defaultPhone,
+  onClose,
+  onPaid,
+}: Props) => {
   const [phone, setPhone] = React.useState("");
   const [phase, setPhase] = React.useState<Phase>("input");
   const [message, setMessage] = React.useState("");
   const [receipt, setReceipt] = React.useState<string | undefined>();
+
+  // Prefill the saved number (shown in local format, e.g. 0712345678) when the sheet opens.
+  React.useEffect(() => {
+    if (visible && defaultPhone && !phone) {
+      setPhone(defaultPhone.replace(/^\+?254/, "0"));
+    }
+  }, [visible, defaultPhone]);
 
   // Stops polling if the modal/screen unmounts mid-payment.
   const unmounted = React.useRef(false);

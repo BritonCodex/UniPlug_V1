@@ -7,6 +7,7 @@ import { PaymentInfoProps } from "@/constants/props";
 import { lineTotal } from "@/lib/cartMath";
 import { computeTotal, DELIVERY_FEE, DISCOUNT } from "@/lib/mpesa";
 import { createOrder } from "@/lib/orders";
+import { updateUserPhone } from "@/lib/profile";
 import { useAddressStore } from "@/store/address.sore";
 import useAuthStore from "@/store/auth.store";
 import { useCartStore } from "@/store/cart.store";
@@ -58,7 +59,7 @@ const CartScreen = () => {
   // Same function the payment modal and the server use, so the screen shows what M-Pesa charges.
   const grandTotal = computeTotal(totalPrice);
 
-  const { user } = useAuthStore();
+  const { user, setUser } = useAuthStore();
   const { address } = useAddressStore();
   const orderPromise = React.useRef<Promise<string | null> | null>(null);
 
@@ -72,6 +73,18 @@ const CartScreen = () => {
     phone: string;
   }) => {
     const snapshot = items;
+
+    // Remember the number that just paid on the customer's profile (and in the app's store).
+    const savedPhone = `+${phone}`;
+    const current: any = user;
+    if (current?.$id && current.phoneNumber !== savedPhone) {
+      updateUserPhone(current.$id, savedPhone)
+        .then(() => setUser({ ...current, phoneNumber: savedPhone }))
+        .catch((e) => {
+          if (__DEV__) console.log("[profile] phone update failed:", e);
+        });
+    }
+
     orderPromise.current = (async () => {
       try {
         const u: any = user;
@@ -208,6 +221,7 @@ const CartScreen = () => {
       <MpesaPaymentModal
         visible={showPayment}
         amount={grandTotal}
+        defaultPhone={(user as any)?.phoneNumber}
         onClose={handleModalClose}
         onPaid={handlePaid}
       />
