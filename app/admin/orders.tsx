@@ -1,4 +1,4 @@
-import { fmt } from "@/lib/cartMath";
+import { fmt, lineTotal, unitPrice } from "@/lib/cartMath";
 import {
   getAllOrders,
   isAdmin,
@@ -7,12 +7,15 @@ import {
   stepIndexForStatus,
   updateOrderStatus,
 } from "@/lib/orders";
+import { Feather } from "@expo/vector-icons";
 import { router, Stack, useFocusEffect } from "expo-router";
 import React from "react";
 import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Image,
+  Linking,
   Pressable,
   StyleSheet,
   Text,
@@ -43,11 +46,6 @@ const nextAction = (status: string) => {
     return { label: "Out for delivery", value: STATUS_VALUE.on_the_way };
   return { label: "Mark delivered", value: STATUS_VALUE.delivered };
 };
-
-const summarize = (items: any[]) =>
-  items.length
-    ? items.map((it) => `${it.quantity ?? 1} × ${it.name}`).join(", ")
-    : "Order details unavailable";
 
 const AdminOrders = () => {
   const [allowed, setAllowed] = React.useState<boolean | null>(null);
@@ -91,6 +89,16 @@ const AdminOrders = () => {
     }
   };
 
+  // Opens the phone's dialer with the customer's number filled in.
+  const callCustomer = async (phone?: string) => {
+    if (!phone) return;
+    try {
+      await Linking.openURL(`tel:${phone.replace(/[^\d+]/g, "")}`);
+    } catch {
+      Alert.alert("Can't place the call", `Dial ${phone} manually.`);
+    }
+  };
+
   const confirmCancel = (orderId: string) =>
     Alert.alert(
       "Cancel this order?",
@@ -129,10 +137,65 @@ const AdminOrders = () => {
           {o.customerName || "Customer"}
           {o.phoneNumber ? ` · ${o.phoneNumber}` : ""}
         </Text>
-        {!!o.address && (
-          <Text style={styles.meta}>Deliver to: {o.address}</Text>
-        )}
-        <Text style={styles.items}>{summarize(o.items)}</Text>
+
+        {/* Delivery point and payment */}
+        <View style={styles.infoBox}>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Delivery point</Text>
+            <Text style={styles.infoValue}>{o.address || "Not provided"}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>
+              {o.paymentMethod === "MPESA" ? "M-Pesa receipt" : "Payment"}
+            </Text>
+            <Text style={[styles.infoValue, styles.receipt]} selectable>
+              {o.transactionCode || "None"}
+            </Text>
+          </View>
+        </View>
+
+        {/* Every item with its toppings and sides */}
+        <View style={styles.itemsBox}>
+          {o.items.length === 0 && (
+            <Text style={styles.meta}>Order details unavailable</Text>
+          )}
+          {o.items.map((it: any, idx: number) => (
+            <View key={`${it.id}-${idx}`} style={styles.itemBlock}>
+              {it.image_url ? (
+                <Image
+                  source={{ uri: it.image_url }}
+                  style={styles.itemImg}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={[styles.itemImg, styles.itemImgEmpty]}>
+                  <Text>🍽️</Text>
+                </View>
+              )}
+              <View style={styles.itemContent}>
+                <View style={styles.itemRow}>
+                  <Text style={styles.itemName}>
+                    {it.quantity ?? 1} × {it.name}
+                  </Text>
+                  <Text style={styles.itemPrice}>Ksh.{fmt(lineTotal(it))}</Text>
+                </View>
+                {(it.customizations ?? []).map((c: any, i: number) => (
+                  <Text key={`${c.name}-${i}`} style={styles.extra}>
+                    + {c.name} (Ksh.{fmt(Number(c.price) || 0)})
+                  </Text>
+                ))}
+                {(it.customizations ?? []).length === 0 && (
+                  <Text style={styles.extraNone}>No extras</Text>
+                )}
+                {(it.quantity ?? 1) > 1 && (
+                  <Text style={styles.extraNone}>
+                    Ksh.{fmt(unitPrice(it))} each
+                  </Text>
+                )}
+              </View>
+            </View>
+          ))}
+        </View>
 
         <View style={styles.bottom}>
           <Text style={styles.total}>Ksh.{fmt(o.totalPrice)}</Text>
@@ -157,6 +220,19 @@ const AdminOrders = () => {
                 <Text style={styles.mainText}>{action.label}</Text>
               )}
             </Pressable>
+            {!!o.phoneNumber && (
+              <Pressable
+                disabled={busy}
+                onPress={() => callCustomer(o.phoneNumber)}
+                style={({ pressed }) => [
+                  styles.callBtn,
+                  { opacity: busy || pressed ? 0.7 : 1 },
+                ]}
+              >
+                <Feather name="phone-call" size={16} color="#fff" />
+                <Text style={styles.callText}>Call</Text>
+              </Pressable>
+            )}
             <Pressable
               disabled={busy}
               onPress={() => confirmCancel(o.$id)}
@@ -287,8 +363,43 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   who: { fontSize: 14, fontWeight: "700", color: "#222" },
+  callBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 14,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: "#2ecc71",
+  },
+  callText: { color: "#fff", fontSize: 13, fontWeight: "800" },
   meta: { fontSize: 12, color: "#888" },
-  items: { fontSize: 14, color: "#555", lineHeight: 20 },
+  infoBox: {
+    backgroundColor: "#f6f6f6",
+    borderRadius: 12,
+    padding: 12,
+    gap: 8,
+  },
+  infoRow: { gap: 2 },
+  infoLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#888",
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+  },
+  infoValue: { fontSize: 14, color: "#222", fontWeight: "600" },
+  receipt: { color: "#a95a14", letterSpacing: 0.5 },
+  itemsBox: { gap: 10, paddingVertical: 4 },
+  itemBlock: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
+  itemContent: { flex: 1, gap: 2 },
+  itemImg: { width: 54, height: 54, borderRadius: 12, backgroundColor: "#eee" },
+  itemImgEmpty: { alignItems: "center", justifyContent: "center" },
+  itemRow: { flexDirection: "row", justifyContent: "space-between", gap: 8 },
+  itemName: { flex: 1, fontSize: 14, fontWeight: "700", color: "#111" },
+  itemPrice: { fontSize: 14, fontWeight: "700", color: "#444" },
+  extra: { fontSize: 13, color: "#8a5a2b", marginLeft: 4 },
+  extraNone: { fontSize: 12, color: "#999", marginLeft: 4 },
   bottom: {
     flexDirection: "row",
     justifyContent: "space-between",
