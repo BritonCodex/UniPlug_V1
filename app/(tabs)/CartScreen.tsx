@@ -1,7 +1,7 @@
 import CartItem from "@/components/CartItem";
-import CrossLoader from "@/components/CrossLoader";
 import CustomButton from "@/components/CustomButton";
 import CustomHeaderComponent from "@/components/CustomHeaderComponent";
+import EmptyCart from "@/components/EmptyCart";
 import MpesaPaymentModal from "@/components/MpesaPaymentModal";
 import { PaymentInfoProps } from "@/constants/props";
 import { lineTotal } from "@/lib/cartMath";
@@ -124,7 +124,7 @@ const CartScreen = () => {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{
           flexGrow: 1,
-          paddingBottom: 28,
+          paddingBottom: 110,
           paddingHorizontal: 10,
           paddingTop: 5,
         }}
@@ -132,13 +132,11 @@ const CartScreen = () => {
           <CustomHeaderComponent title="Cart" imageShow={true} />
         )}
         ListEmptyComponent={() => (
-          <View
-            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-          >
-            <CrossLoader />
-            <Text style={{ marginTop: 10, color: "#6666668f", fontSize: 14 }}>
-              Your cart is empty
-            </Text>
+          <View style={{ flex: 1, justifyContent: "center" }}>
+            <EmptyCart
+              actionLabel="Browse menu"
+              onAction={() => router.navigate("/(tabs)/SearchScreen" as any)}
+            />
           </View>
         )}
         ListFooterComponent={() =>
