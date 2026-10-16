@@ -1,3 +1,4 @@
+import EmptyBucket from "@/components/EmptyBucket";
 import { HOME_ROUTE } from "@/constants/routes";
 import { fmt } from "@/lib/cartMath";
 import { getMyOrders, isFailedStatus, stepIndexForStatus } from "@/lib/orders";
@@ -7,6 +8,7 @@ import React from "react";
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -100,9 +102,42 @@ const OrdersScreen = () => {
           </View>
         </View>
 
-        <Text style={styles.items} numberOfLines={2}>
-          {summarize(o.items)}
-        </Text>
+        <View style={styles.itemsRow}>
+          <View style={styles.thumbs}>
+            {o.items.slice(0, 3).map((it: any, i: number) =>
+              it.image_url ? (
+                <Image
+                  key={`${it.id}-${i}`}
+                  source={{ uri: it.image_url }}
+                  style={[styles.thumb, i > 0 && styles.thumbOverlap]}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View
+                  key={`${it.id}-${i}`}
+                  style={[
+                    styles.thumb,
+                    styles.thumbEmpty,
+                    i > 0 && styles.thumbOverlap,
+                  ]}
+                >
+                  <Text>🍽️</Text>
+                </View>
+              ),
+            )}
+            {o.items.length > 3 && (
+              <View
+                style={[styles.thumb, styles.thumbEmpty, styles.thumbOverlap]}
+              >
+                <Text style={styles.thumbMore}>+{o.items.length - 3}</Text>
+              </View>
+            )}
+          </View>
+
+          <Text style={styles.items} numberOfLines={3}>
+            {summarize(o.items)}
+          </Text>
+        </View>
 
         <View style={styles.cardBottom}>
           <Text style={styles.date}>
@@ -158,22 +193,29 @@ const OrdersScreen = () => {
           contentContainerStyle={styles.list}
           ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
           ListEmptyComponent={
-            <View style={styles.empty}>
-              <Text style={styles.emptyTitle}>
-                {error ||
-                  (tab === "active"
-                    ? "No active orders"
-                    : "No past orders yet")}
-              </Text>
-              {!error && tab === "active" && (
-                <Pressable
-                  style={styles.browseBtn}
-                  onPress={() => router.replace(HOME_ROUTE as any)}
-                >
-                  <Text style={styles.browseText}>Browse menu</Text>
-                </Pressable>
-              )}
-            </View>
+            error ? (
+              <EmptyBucket
+                title="Couldn't load your orders"
+                subtitle={error}
+                actionLabel="Try again"
+                onAction={() => {
+                  setLoading(true);
+                  load();
+                }}
+              />
+            ) : tab === "active" ? (
+              <EmptyBucket
+                title="No active orders"
+                subtitle="Your bucket's empty. Orders you place will show up here."
+                actionLabel="Browse menu"
+                onAction={() => router.replace(HOME_ROUTE as any)}
+              />
+            ) : (
+              <EmptyBucket
+                title="No past orders yet"
+                subtitle="Delivered and cancelled orders will be kept here."
+              />
+            )
           }
         />
       )}
@@ -223,7 +265,20 @@ const styles = StyleSheet.create({
   orderNo: { fontSize: 15, fontWeight: "800", color: "#111" },
   chip: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
   chipText: { fontSize: 12, fontWeight: "700" },
-  items: { fontSize: 14, color: "#555", lineHeight: 20 },
+  itemsRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  thumbs: { flexDirection: "row", alignItems: "center" },
+  thumb: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: "#eee",
+    borderWidth: 2,
+    borderColor: "#fff",
+  },
+  thumbOverlap: { marginLeft: -16 },
+  thumbEmpty: { alignItems: "center", justifyContent: "center" },
+  thumbMore: { fontSize: 13, fontWeight: "800", color: "#666" },
+  items: { flex: 1, fontSize: 14, color: "#555", lineHeight: 20 },
   cardBottom: {
     flexDirection: "row",
     justifyContent: "space-between",
