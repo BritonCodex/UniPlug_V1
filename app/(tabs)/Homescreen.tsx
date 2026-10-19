@@ -1,15 +1,23 @@
 import CartComponent from "@/components/CartComponent";
 import { image_layout, images } from "@/constants/images";
-import { getPickupLocations, updateUserAddress } from "@/lib/appwrite";
+import {
+  getCategories,
+  getPickupLocations,
+  updateUserAddress,
+} from "@/lib/appwrite";
+import useAppwrite from "@/lib/useAppwrite";
 import { useAddressStore } from "@/store/address.sore";
 import useAuthStore from "@/store/auth.store";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React from "react";
 import {
+  ActivityIndicator,
+  Alert,
   Animated,
   FlatList,
   Image,
+  Modal,
   PanResponder,
   Pressable,
   StyleSheet,
@@ -18,29 +26,53 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
 // ---------------- DESIGN TOKENS ----------------
 const SPACING = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24 };
 const RADIUS = { sm: 8, md: 14, lg: 20, sheet: 28 };
 const CARD_HEIGHT = 160;
+const ORANGE = "#FF8F3A";
+// The tab bar floats above the screen (~61px tall, 10px up), so lists need room under them.
+const TAB_BAR_CLEARANCE = 110;
+
+// Used when a category has no matching entry in image_layout.
+const FALLBACK_COLORS = ["#a57913", "#74633b", "#406e3b"];
 
 const Homescreen = () => {
-  const { width, height } = useWindowDimensions();
+  const { height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const { user, setUser } = useAuthStore();
   const { address, setAddress } = useAddressStore();
 
+  // ---------------- CATEGORIES (cards) ----------------
+  const { data: categories, loading: categoriesLoading } = useAppwrite({
+    fn: getCategories,
+  });
+
   // ---------------- ADDRESS ----------------
+  // Follow the signed-in user, including clearing a previous user's address.
   React.useEffect(() => {
-    if (user?.address) setAddress(user.address);
-  }, [user]);
+    setAddress(user?.address ?? "");
+  }, [user?.$id, user?.address]);
 
   const handleSelectAddress = async (newAddress: string) => {
+    const previous = address;
     setAddress(newAddress);
+    if (!user?.$id) return;
 
-    if (user?.$id) {
+    try {
       await updateUserAddress(user.$id, newAddress);
       setUser({ ...user, address: newAddress });
+    } catch {
+      setAddress(previous); // don't show a delivery point that wasn't saved
+      Alert.alert(
+        "Couldn't save your delivery point",
+        "Check your connection and try again.",
+      );
     }
   };
 
@@ -102,22 +134,32 @@ const Homescreen = () => {
   ).current;
 
   // ---------------- RENDER HELPERS ----------------
-  const renderCard = ({
-    item,
-    index,
-  }: {
-    item: (typeof image_layout)[number];
-    index: number;
-  }) => {
+  const renderCard = ({ item, index }: { item: any; index: number }) => {
     const isEven = index % 2 === 0;
+    // Picture and colour come from image_layout (constants/images.ts), matched by category name.
+    const match = image_layout.find(
+      (l) => l.category === String(item.name).toLowerCase(),
+    );
+    const look = {
+      image: match?.image ?? images.burgerOne,
+      color: match?.color ?? FALLBACK_COLORS[index % FALLBACK_COLORS.length],
+    };
+    const description = item.description || match?.desc;
 
     return (
       <Pressable
+        // Opens the Search tab already filtered to this category.
+        onPress={() =>
+          router.navigate({
+            pathname: "/(tabs)/SearchScreen",
+            params: { category: item.$id },
+          } as any)
+        }
         android_ripple={{ color: "#ffffff22" }}
         style={({ pressed }) => [
           styles.card,
           {
-            backgroundColor: item.color,
+            backgroundColor: look.color,
             flexDirection: isEven ? "row" : "row-reverse",
             opacity: pressed ? 0.92 : 1,
           },
@@ -125,7 +167,7 @@ const Homescreen = () => {
       >
         <View style={styles.cardImageWrap}>
           <Image
-            source={item.image}
+            source={look.image}
             resizeMode="contain"
             style={styles.cardImage}
           />
@@ -141,15 +183,20 @@ const Homescreen = () => {
             style={[styles.cardTitle, { textAlign: isEven ? "left" : "right" }]}
             numberOfLines={2}
           >
-            {item.title}
+            {item.name}
           </Text>
 
-          <Text
-            style={[styles.cardDesc, { textAlign: isEven ? "left" : "right" }]}
-            numberOfLines={2}
-          >
-            {item.desc}
-          </Text>
+          {!!description && (
+            <Text
+              style={[
+                styles.cardDesc,
+                { textAlign: isEven ? "left" : "right" },
+              ]}
+              numberOfLines={2}
+            >
+              {description}
+            </Text>
+          )}
 
           <View style={styles.arrowChip}>
             <Image
@@ -191,7 +238,8 @@ const Homescreen = () => {
             <CartComponent />
 
             <TouchableOpacity
-              onPress={() => router.push("/(tabs)/ProfileScreen")}
+              // navigate() switches to the Profile tab instead of stacking a copy of it.
+              onPress={() => router.navigate("/(tabs)/ProfileScreen")}
               activeOpacity={0.8}
             >
               <Image
@@ -202,26 +250,48 @@ const Homescreen = () => {
           </View>
         </View>
 
-        {/* ---------------- MENU LIST ---------------- */}
+        {/* ---------------- CATEGORY CARDS ---------------- */}
         <FlatList
           style={styles.list}
-          data={image_layout}
-          keyExtractor={(item) => String(item.id)}
+          data={(categories ?? []) as any[]}
+          keyExtractor={(item) => item.$id}
           renderItem={renderCard}
           showsVerticalScrollIndicator={false}
           ItemSeparatorComponent={() => <View style={{ height: SPACING.md }} />}
           contentContainerStyle={styles.listContent}
+          ListEmptyComponent={
+            categoriesLoading ? (
+              <ActivityIndicator
+                size="large"
+                color={ORANGE}
+                style={{ marginTop: SPACING.xl * 2 }}
+              />
+            ) : (
+              <Text style={styles.emptyText}>No categories yet</Text>
+            )
+          }
         />
 
         {/* ---------------- PICKUP SHEET ---------------- */}
-        {showLocations && (
+        {/* A Modal draws above the floating tab bar and closes with the Android back button. */}
+        <Modal
+          visible={showLocations}
+          transparent
+          animationType="none"
+          statusBarTranslucent
+          onRequestClose={closeSheet}
+        >
           <View style={styles.backdrop}>
             <Pressable style={StyleSheet.absoluteFill} onPress={closeSheet} />
 
             <Animated.View
               style={[
                 styles.sheet,
-                { transform: [{ translateY }], maxHeight: height * 0.65 },
+                {
+                  transform: [{ translateY }],
+                  maxHeight: height * 0.65,
+                  paddingBottom: Math.max(insets.bottom, SPACING.md),
+                },
               ]}
             >
               <View
@@ -245,24 +315,46 @@ const Homescreen = () => {
                 ItemSeparatorComponent={() => (
                   <View style={{ height: SPACING.sm }} />
                 )}
-                contentContainerStyle={{ paddingBottom: SPACING.xl }}
-                renderItem={({ item: loc }) => (
-                  <TouchableOpacity
-                    activeOpacity={0.7}
-                    onPress={() => {
-                      handleSelectAddress(loc.address);
-                      closeSheet();
-                    }}
-                    style={styles.locationItem}
-                  >
-                    <Text style={styles.locationName}>{loc.name}</Text>
-                    <Text style={styles.locationAddress}>{loc.address}</Text>
-                  </TouchableOpacity>
-                )}
+                contentContainerStyle={{ paddingBottom: SPACING.lg }}
+                ListEmptyComponent={
+                  <Text style={styles.emptyText}>
+                    No pickup points available yet
+                  </Text>
+                }
+                renderItem={({ item: loc }) => {
+                  const selected = loc.address === address;
+                  return (
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => {
+                        handleSelectAddress(loc.address);
+                        closeSheet();
+                      }}
+                      style={[
+                        styles.locationItem,
+                        selected && styles.locationItemSelected,
+                      ]}
+                    >
+                      <View style={{ flex: 1, gap: SPACING.xs }}>
+                        <Text style={styles.locationName}>{loc.name}</Text>
+                        <Text style={styles.locationAddress}>
+                          {loc.address}
+                        </Text>
+                      </View>
+                      {selected && (
+                        <Ionicons
+                          name="checkmark-circle"
+                          size={22}
+                          color={ORANGE}
+                        />
+                      )}
+                    </TouchableOpacity>
+                  );
+                }}
               />
             </Animated.View>
           </View>
-        )}
+        </Modal>
       </View>
     </SafeAreaView>
   );
@@ -334,7 +426,13 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.lg,
-    paddingBottom: SPACING.xl,
+    paddingBottom: TAB_BAR_CLEARANCE,
+  },
+  emptyText: {
+    textAlign: "center",
+    color: "#888",
+    fontSize: 14,
+    marginTop: SPACING.xl,
   },
 
   // Card
@@ -391,7 +489,7 @@ const styles = StyleSheet.create({
 
   // Sheet
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    flex: 1,
     backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "flex-end",
   },
@@ -423,10 +521,18 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   locationItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.md,
     padding: SPACING.lg,
     borderRadius: RADIUS.md,
     backgroundColor: "#f7f7f7",
-    gap: SPACING.xs,
+    borderWidth: 1.5,
+    borderColor: "transparent",
+  },
+  locationItemSelected: {
+    borderColor: ORANGE,
+    backgroundColor: "#FF8F3A14",
   },
   locationName: {
     fontWeight: "600",
