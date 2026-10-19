@@ -1,7 +1,9 @@
 import CartComponent from "@/components/CartComponent";
+import HomePromos from "@/components/HomePromos";
 import { image_layout, images } from "@/constants/images";
 import {
   getCategories,
+  getMenu,
   getPickupLocations,
   updateUserAddress,
 } from "@/lib/appwrite";
@@ -51,6 +53,12 @@ const Homescreen = () => {
   // ---------------- CATEGORIES (cards) ----------------
   const { data: categories, loading: categoriesLoading } = useAppwrite({
     fn: getCategories,
+  });
+
+  // ---------------- MENU (feeds the offers and rails) ----------------
+  const { data: menu } = useAppwrite({
+    fn: getMenu,
+    params: { category: "", query: "", limit: 20 },
   });
 
   // ---------------- ADDRESS ----------------
@@ -259,6 +267,12 @@ const Homescreen = () => {
           showsVerticalScrollIndicator={false}
           ItemSeparatorComponent={() => <View style={{ height: SPACING.md }} />}
           contentContainerStyle={styles.listContent}
+          ListHeaderComponent={
+            <View>
+              <HomePromos items={(menu ?? []) as any[]} />
+              <Text style={styles.sectionTitle}>Browse categories</Text>
+            </View>
+          }
           ListEmptyComponent={
             categoriesLoading ? (
               <ActivityIndicator
@@ -427,6 +441,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.lg,
     paddingBottom: TAB_BAR_CLEARANCE,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#111",
+    marginTop: SPACING.md,
+    marginBottom: SPACING.md,
   },
   emptyText: {
     textAlign: "center",
