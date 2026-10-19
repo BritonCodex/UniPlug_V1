@@ -4,6 +4,7 @@ import CustomHeaderComponent from "@/components/CustomHeaderComponent";
 import EmptyCart from "@/components/EmptyCart";
 import MpesaPaymentModal from "@/components/MpesaPaymentModal";
 import { PaymentInfoProps } from "@/constants/props";
+import { HOME_ROUTE } from "@/constants/routes";
 import { lineTotal } from "@/lib/cartMath";
 import { computeTotal, DELIVERY_FEE, DISCOUNT } from "@/lib/mpesa";
 import { createOrder } from "@/lib/orders";
@@ -202,7 +203,23 @@ const CartScreen = () => {
               {/* Assumes CustomButton accepts an onPress prop. */}
               <CustomButton
                 text="Order now"
-                onPress={() => setShowPayment(true)}
+                onPress={() => {
+                  if (!address) {
+                    Alert.alert(
+                      "Choose a delivery point",
+                      "Select where we should deliver your order before paying.",
+                      [
+                        { text: "Not now", style: "cancel" },
+                        {
+                          text: "Choose now",
+                          onPress: () => router.navigate(HOME_ROUTE as any),
+                        },
+                      ],
+                    );
+                    return;
+                  }
+                  setShowPayment(true);
+                }}
                 buttonStyles={{
                   backgroundColor: "#FF8F3A",
                   width: "100%",
