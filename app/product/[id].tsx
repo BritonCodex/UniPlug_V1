@@ -1,3 +1,4 @@
+import CachedImage from "@/components/CachedImage";
 import { images } from "@/constants/images";
 import { appwriteConfig } from "@/lib/appwrite";
 import { getMenuItem, getOptionsForItem } from "@/lib/menu";
@@ -72,7 +73,7 @@ const OptionCard = ({
   >
     <View style={styles.optionTop}>
       {option.image_url ? (
-        <Image
+        <CachedImage
           source={{ uri: option.image_url }}
           style={styles.optionImg}
           resizeMode="contain"
@@ -237,7 +238,7 @@ const ProductDetails = () => {
             </View>
           </View>
 
-          <Image
+          <CachedImage
             source={{ uri: imageUrl }}
             resizeMode="contain"
             style={[

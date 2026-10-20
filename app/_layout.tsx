@@ -1,6 +1,8 @@
 import PulseLoader from "@/components/Pulseloader";
+import { DAY, persister, queryClient } from "@/lib/queryClient";
 import useAuthStore from "@/store/auth.store";
 import * as Sentry from "@sentry/react-native";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { Stack } from "expo-router";
 import React, { useEffect } from "react";
 import { View } from "react-native";
@@ -61,15 +63,17 @@ const RootLayout = () => {
     );
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-      }}
-      //initialRouteName="(tabs)"
-    />
-    //{/* <Stack.Screen name="(auth)" /> */}
-    //<Stack.Screen name="(tabs)" />
-    //</Stack>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{ persister, maxAge: DAY, buster: "v1" }}
+    >
+      <Stack
+        screenOptions={{
+          headerShown: false,
+        }}
+        //initialRouteName="(tabs)"
+      />
+    </PersistQueryClientProvider>
   );
 };
 

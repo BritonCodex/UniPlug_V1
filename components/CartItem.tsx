@@ -1,3 +1,4 @@
+import CachedImage from "@/components/CachedImage";
 import { images } from "@/constants/images";
 import { CartItemType } from "@/constants/props";
 import { fmt, lineTotal, unitPrice } from "@/lib/cartMath";
@@ -12,7 +13,7 @@ const CartItem = ({ item }: { item: CartItemType }) => {
 
   return (
     <View style={styles.row}>
-      <Image
+      <CachedImage
         source={{ uri: item.image_url }}
         resizeMode="cover"
         style={styles.image}

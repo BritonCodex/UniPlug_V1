@@ -14,13 +14,18 @@ if (!API_BASE_URL || API_BASE_URL.includes("your-backend-url")) {
   );
 }
 
-const POLL_INTERVAL_MS = 3000;
 // Safaricom's STK prompt expires after ~90s if the customer doesn't respond.
 const POLL_TIMEOUT_MS = 90_000;
+const REQUEST_TIMEOUT_MS = 15_000;
+
+// Polling backs off so many customers paying at once don't hammer the gateway:
+// 3s for the first 5 checks, then 5s.
+const pollDelay = (attempt: number) => (attempt < 5 ? 3000 : 5000);
 
 // One source of truth for what the cart shows and what gets charged.
-export const DELIVERY_FEE = 0;
-export const DISCOUNT = 0;
+// Keep your own real values here.
+export const DELIVERY_FEE = 200;
+export const DISCOUNT = 10;
 export const computeTotal = (subtotal: number) =>
   subtotal > 0
     ? Math.max(0, Math.round(subtotal + DELIVERY_FEE - DISCOUNT))
@@ -43,8 +48,42 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 // Harmless on a real backend.
 const BASE_HEADERS = { "ngrok-skip-browser-warning": "true" };
 
+// fetch with a timeout, plus retries for the "server is waking up" errors (502/503/504).
+// `retryNetworkErrors` is false for the payment POST: if the request may have reached the
+// server, retrying could send a second prompt to the customer's phone.
+async function fetchWithRetry(
+  url: string,
+  init: RequestInit,
+  {
+    retries = 2,
+    retryNetworkErrors = true,
+  }: { retries?: number; retryNetworkErrors?: boolean } = {},
+): Promise<Response> {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    try {
+      const res = await fetch(url, { ...init, signal: controller.signal });
+      clearTimeout(timer);
+      if ([502, 503, 504].includes(res.status) && attempt < retries) {
+        await sleep(1000 * 2 ** attempt); // 1s, 2s
+        continue;
+      }
+      return res;
+    } catch (e) {
+      clearTimeout(timer);
+      lastError = e;
+      if (!retryNetworkErrors || attempt === retries) break;
+      await sleep(1000 * 2 ** attempt);
+    }
+  }
+  throw lastError ?? new Error("Network request failed");
+}
+
 async function getJson(path: string) {
-  const res = await fetch(`${API_BASE_URL}${path}`, {
+  const res = await fetchWithRetry(`${API_BASE_URL}${path}`, {
     cache: "no-store",
     headers: BASE_HEADERS,
   });
@@ -63,11 +102,26 @@ export async function startStkPush(params: {
     );
   }
   const url = `${API_BASE_URL}/stkpush`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { ...BASE_HEADERS, "Content-Type": "application/json" },
-    body: JSON.stringify(params),
-  });
+
+  let res: Response;
+  try {
+    res = await fetchWithRetry(
+      url,
+      {
+        method: "POST",
+        headers: { ...BASE_HEADERS, "Content-Type": "application/json" },
+        body: JSON.stringify(params),
+      },
+      { retryNetworkErrors: false },
+    );
+  } catch (e: any) {
+    if (e?.name === "AbortError") {
+      throw new Error(
+        "The payment server is taking too long. Wait a moment and try again.",
+      );
+    }
+    throw e;
+  }
 
   // Read as text first so an HTML/empty reply doesn't get swallowed.
   const raw = await res.text();
@@ -101,9 +155,10 @@ export async function waitForPayment(
   isCancelled: () => boolean = () => false,
 ): Promise<PaymentOutcome> {
   const deadline = Date.now() + POLL_TIMEOUT_MS;
+  let attempt = 0;
 
   while (Date.now() < deadline) {
-    await sleep(POLL_INTERVAL_MS);
+    await sleep(pollDelay(attempt++));
     if (isCancelled()) return { status: "timeout" };
 
     try {

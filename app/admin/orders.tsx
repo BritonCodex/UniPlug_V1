@@ -1,3 +1,4 @@
+import CachedImage from "@/components/CachedImage";
 import { fmt, lineTotal, unitPrice } from "@/lib/cartMath";
 import {
   getAllOrders,
@@ -14,7 +15,6 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  Image,
   Linking,
   Pressable,
   StyleSheet,
@@ -162,7 +162,7 @@ const AdminOrders = () => {
           {o.items.map((it: any, idx: number) => (
             <View key={`${it.id}-${idx}`} style={styles.itemBlock}>
               {it.image_url ? (
-                <Image
+                <CachedImage
                   source={{ uri: it.image_url }}
                   style={styles.itemImg}
                   resizeMode="cover"

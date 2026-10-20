@@ -1,13 +1,8 @@
 import CartComponent from "@/components/CartComponent";
 import HomePromos from "@/components/HomePromos";
 import { image_layout, images } from "@/constants/images";
-import {
-  getCategories,
-  getMenu,
-  getPickupLocations,
-  updateUserAddress,
-} from "@/lib/appwrite";
-import useAppwrite from "@/lib/useAppwrite";
+import { updateUserAddress } from "@/lib/appwrite";
+import { useCategories, useMenu, usePickupLocations } from "@/lib/queryClient";
 import { useAddressStore } from "@/store/address.sore";
 import useAuthStore from "@/store/auth.store";
 import { Ionicons } from "@expo/vector-icons";
@@ -51,15 +46,10 @@ const Homescreen = () => {
   const { address, setAddress } = useAddressStore();
 
   // ---------------- CATEGORIES (cards) ----------------
-  const { data: categories, loading: categoriesLoading } = useAppwrite({
-    fn: getCategories,
-  });
+  const { data: categories, isLoading: categoriesLoading } = useCategories();
 
   // ---------------- MENU (feeds the offers and rails) ----------------
-  const { data: menu } = useAppwrite({
-    fn: getMenu,
-    params: { category: "", query: "", limit: 20 },
-  });
+  const { data: menu } = useMenu();
 
   // ---------------- ADDRESS ----------------
   // Follow the signed-in user, including clearing a previous user's address.
@@ -85,16 +75,9 @@ const Homescreen = () => {
   };
 
   // ---------------- LOCATIONS ----------------
-  const [locations, setLocations] = React.useState<any[]>([]);
+  const { data: locationsData } = usePickupLocations();
+  const locations = (locationsData ?? []) as any[];
   const [showLocations, setShowLocations] = React.useState(false);
-
-  React.useEffect(() => {
-    const loadLocations = async () => {
-      const data = await getPickupLocations();
-      setLocations(data);
-    };
-    loadLocations();
-  }, []);
 
   // ---------------- SHEET ANIMATION ----------------
   const translateY = React.useRef(new Animated.Value(height)).current;

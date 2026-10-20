@@ -1,4 +1,6 @@
+import CachedImage from "@/components/CachedImage";
 import { HOME_ROUTE } from "@/constants/routes";
+import { appwriteConfig, client } from "@/lib/appwrite";
 import { fmt, lineTotal, unitPrice } from "@/lib/cartMath";
 import { DELIVERY_FEE, DISCOUNT } from "@/lib/mpesa";
 import { getOrder, isFailedStatus, stepIndexForStatus } from "@/lib/orders";
@@ -6,7 +8,6 @@ import { Stack, router, useLocalSearchParams } from "expo-router";
 import React from "react";
 import {
   ActivityIndicator,
-  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -20,7 +21,8 @@ import {
 
 const ORANGE = "#FF8F3A";
 const GREEN = "#2ecc71";
-const POLL_MS = 15_000;
+// Live updates arrive by push; this slow refresh is only a safety net if the connection drops.
+const POLL_MS = 60_000;
 
 const STEPS: { key: string; label: string; sub: string }[] = [
   {
@@ -62,12 +64,14 @@ const OrderScreen = () => {
   const [order, setOrder] = React.useState<any>(null);
   const [error, setError] = React.useState("");
 
-  // Load once, then keep checking so the tracker moves when the status changes.
+  // Appwrite pushes a message when this order changes, so the tracker moves instantly
+  // without every customer polling the server.
   React.useEffect(() => {
     let alive = true;
     let timer: ReturnType<typeof setTimeout>;
 
     const load = async () => {
+      clearTimeout(timer);
       try {
         const o = await getOrder(id);
         if (!alive) return;
@@ -84,9 +88,22 @@ const OrderScreen = () => {
     };
     load();
 
+    const db = appwriteConfig.databaseId;
+    const table = appwriteConfig.orderCollectionId;
+    const unsubscribe = client.subscribe(
+      [
+        `databases.${db}.collections.${table}.documents.${id}`, // older channel name
+        `databases.${db}.tables.${table}.rows.${id}`, // TablesDB channel name
+      ],
+      () => {
+        if (alive) load();
+      },
+    );
+
     return () => {
       alive = false;
       clearTimeout(timer);
+      unsubscribe();
     };
   }, [id]);
 
@@ -232,7 +249,7 @@ const OrderScreen = () => {
           <Text style={styles.cardTitle}>Your order</Text>
           {order.items.map((it: any, idx: number) => (
             <View key={`${it.id}-${idx}`} style={styles.itemRow}>
-              <Image
+              <CachedImage
                 source={{ uri: it.image_url }}
                 style={styles.itemImg}
                 resizeMode="cover"

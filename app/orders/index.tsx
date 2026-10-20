@@ -1,3 +1,4 @@
+import CachedImage from "@/components/CachedImage";
 import EmptyBucket from "@/components/EmptyBucket";
 import { HOME_ROUTE } from "@/constants/routes";
 import { fmt } from "@/lib/cartMath";
@@ -8,7 +9,6 @@ import React from "react";
 import {
   ActivityIndicator,
   FlatList,
-  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -106,7 +106,7 @@ const OrdersScreen = () => {
           <View style={styles.thumbs}>
             {o.items.slice(0, 3).map((it: any, i: number) =>
               it.image_url ? (
-                <Image
+                <CachedImage
                   key={`${it.id}-${i}`}
                   source={{ uri: it.image_url }}
                   style={[styles.thumb, i > 0 && styles.thumbOverlap]}
