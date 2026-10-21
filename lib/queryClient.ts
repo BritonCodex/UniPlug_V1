@@ -17,6 +17,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { QueryClient, useQuery } from "@tanstack/react-query";
 import { getCategories, getMenu, getPickupLocations } from "./appwrite";
+import { getPromos } from "./homeContent";
 
 export const MINUTE = 60_000;
 export const DAY = 24 * 60 * MINUTE;
@@ -51,6 +52,9 @@ export const usePickupLocations = () =>
     queryFn: getPickupLocations,
     staleTime: 30 * MINUTE,
   });
+
+export const usePromos = () =>
+  useQuery({ queryKey: ["promos"], queryFn: getPromos, staleTime: 5 * MINUTE });
 
 export const useMenu = (category = "", query = "") =>
   useQuery({
