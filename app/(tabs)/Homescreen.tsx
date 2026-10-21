@@ -1,8 +1,15 @@
+import CachedImage from "@/components/CachedImage";
 import CartComponent from "@/components/CartComponent";
 import HomePromos from "@/components/HomePromos";
 import { image_layout, images } from "@/constants/images";
 import { updateUserAddress } from "@/lib/appwrite";
-import { useCategories, useMenu, usePickupLocations } from "@/lib/queryClient";
+import { withProject } from "@/lib/homeContent";
+import {
+  useCategories,
+  useMenu,
+  usePickupLocations,
+  usePromos,
+} from "@/lib/queryClient";
 import { useAddressStore } from "@/store/address.sore";
 import useAuthStore from "@/store/auth.store";
 import { Ionicons } from "@expo/vector-icons";
@@ -47,6 +54,18 @@ const Homescreen = () => {
 
   // ---------------- CATEGORIES (cards) ----------------
   const { data: categories, isLoading: categoriesLoading } = useCategories();
+
+  // Order the cards by the `sort_order` column when you set one.
+  const sortedCategories = React.useMemo(
+    () =>
+      [...((categories ?? []) as any[])].sort(
+        (a, b) => (a.sort_order ?? 999) - (b.sort_order ?? 999),
+      ),
+    [categories],
+  );
+
+  // Banners from the `promos` table (the built-in ones show until you add some).
+  const { data: promos } = usePromos();
 
   // ---------------- MENU (feeds the offers and rails) ----------------
   const { data: menu } = useMenu();
@@ -131,9 +150,14 @@ const Homescreen = () => {
     const match = image_layout.find(
       (l) => l.category === String(item.name).toLowerCase(),
     );
+    // Database values win; the local image_layout entry is only a fallback.
+    const dbImage = withProject(item.image_url);
     const look = {
-      image: match?.image ?? images.burgerOne,
-      color: match?.color ?? FALLBACK_COLORS[index % FALLBACK_COLORS.length],
+      image: dbImage ? { uri: dbImage } : (match?.image ?? images.burgerOne),
+      color:
+        item.color ||
+        match?.color ||
+        FALLBACK_COLORS[index % FALLBACK_COLORS.length],
     };
     const description = item.description || match?.desc;
 
@@ -157,7 +181,7 @@ const Homescreen = () => {
         ]}
       >
         <View style={styles.cardImageWrap}>
-          <Image
+          <CachedImage
             source={look.image}
             resizeMode="contain"
             style={styles.cardImage}
@@ -244,7 +268,7 @@ const Homescreen = () => {
         {/* ---------------- CATEGORY CARDS ---------------- */}
         <FlatList
           style={styles.list}
-          data={(categories ?? []) as any[]}
+          data={sortedCategories}
           keyExtractor={(item) => item.$id}
           renderItem={renderCard}
           showsVerticalScrollIndicator={false}
@@ -252,7 +276,10 @@ const Homescreen = () => {
           contentContainerStyle={styles.listContent}
           ListHeaderComponent={
             <View>
-              <HomePromos items={(menu ?? []) as any[]} />
+              <HomePromos
+                items={(menu ?? []) as any[]}
+                promos={(promos ?? []) as any[]}
+              />
               <Text style={styles.sectionTitle}>Browse categories</Text>
             </View>
           }

@@ -1,10 +1,11 @@
 import { appwriteConfig } from "@/lib/appwrite";
+import CachedImage from "@/lib/CachedImage";
 import { fmt } from "@/lib/cartMath";
+import { Promo, withProject } from "@/lib/homeContent";
 import { router } from "expo-router";
 import React from "react";
 import {
   FlatList,
-  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -24,12 +25,24 @@ const openItem = (id?: string) =>
     ? router.push({ pathname: "/product/[id]", params: { id } } as any)
     : router.navigate("/(tabs)/SearchScreen" as any);
 
+const openBanner = (b: { itemId?: string; categoryId?: string }) => {
+  if (b.itemId) return openItem(b.itemId);
+  if (b.categoryId) {
+    return router.navigate({
+      pathname: "/(tabs)/SearchScreen",
+      params: { category: b.categoryId },
+    } as any);
+  }
+  return router.navigate("/(tabs)/SearchScreen" as any);
+};
+
 type Banner = {
   key: string;
   title: string;
   subtitle: string;
   color: string;
   itemId?: string;
+  categoryId?: string;
   image?: string;
 };
 
@@ -41,7 +54,7 @@ const MiniCard = ({ item }: { item: any }) => {
       onPress={() => openItem(item.$id)}
       style={({ pressed }) => [styles.mini, { opacity: pressed ? 0.92 : 1 }]}
     >
-      <Image
+      <CachedImage
         source={{ uri: imageUrl(item) }}
         style={styles.miniImg}
         resizeMode="contain"
@@ -106,7 +119,13 @@ const Rail = ({
 };
 
 // ---- The whole promo block: banner carousel + rails -----------------------------------------
-const HomePromos = ({ items }: { items: any[] }) => {
+const HomePromos = ({
+  items,
+  promos = [],
+}: {
+  items: any[];
+  promos?: Promo[];
+}) => {
   const { width } = useWindowDimensions();
   const bannerW = width - SIDE * 2 - 28; // leave a peek of the next banner
 
@@ -169,14 +188,25 @@ const HomePromos = ({ items }: { items: any[] }) => {
         image: imageUrl(pick),
       });
     }
+    // Banners you create in the `promos` table replace the built-in ones.
+    const fromDb: Banner[] = promos.map((p) => ({
+      key: p.$id,
+      title: p.title,
+      subtitle: p.subtitle ?? "",
+      color: p.color || ORANGE,
+      itemId: p.menu_item_id || undefined,
+      categoryId: p.category_id || undefined,
+      image: withProject(p.image_url),
+    }));
+
     return {
-      banners: list,
+      banners: fromDb.length > 0 ? fromDb : list,
       topRated: top,
       deals: dealItems,
       spicy: spicyItems,
       isWeekend: weekend,
     };
-  }, [items]);
+  }, [items, promos]);
 
   if (items.length === 0) return null;
 
@@ -212,7 +242,7 @@ const HomePromos = ({ items }: { items: any[] }) => {
                 </View>
               </View>
               {!!b.image && (
-                <Image
+                <CachedImage
                   source={{ uri: b.image }}
                   style={styles.bannerImg}
                   resizeMode="contain"
