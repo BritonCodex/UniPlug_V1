@@ -24,8 +24,8 @@ const pollDelay = (attempt: number) => (attempt < 5 ? 3000 : 5000);
 
 // One source of truth for what the cart shows and what gets charged.
 // Keep your own real values here.
-export const DELIVERY_FEE = 200;
-export const DISCOUNT = 10;
+export const DELIVERY_FEE = 0; //200
+export const DISCOUNT = 0;
 export const computeTotal = (subtotal: number) =>
   subtotal > 0
     ? Math.max(0, Math.round(subtotal + DELIVERY_FEE - DISCOUNT))
