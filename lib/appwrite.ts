@@ -26,6 +26,7 @@ export const appwriteConfig = {
   menuCustomizationsCollectionId: "menu_customizations",
   pickupLocationsCollectionId: "pickup_locations",
   orderCollectionId: "orders",
+  promosCollectionId: "6ad89e21001a9af157f5",
 };
 
 //accept new client
