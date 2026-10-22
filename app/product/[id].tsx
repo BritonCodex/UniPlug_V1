@@ -160,7 +160,7 @@ const ProductDetails = () => {
         customizations,
       });
     }
-    router.back();
+    router.navigate("/(tabs)/CartScreen");
   };
 
   const header = (
