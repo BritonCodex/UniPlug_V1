@@ -54,7 +54,7 @@ export const usePickupLocations = () =>
   });
 
 export const usePromos = () =>
-  useQuery({ queryKey: ["promos"], queryFn: getPromos, staleTime: 5 * MINUTE });
+  useQuery({ queryKey: ["promos"], queryFn: getPromos, staleTime: 1 * MINUTE });
 
 export const useMenu = (category = "", query = "") =>
   useQuery({

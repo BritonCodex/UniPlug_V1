@@ -25,12 +25,15 @@ const openItem = (id?: string) =>
     ? router.push({ pathname: "/product/[id]", params: { id } } as any)
     : router.navigate("/(tabs)/SearchScreen" as any);
 
+// A banner opens its menu item if it has one, else its category screen, else Search.
 const openBanner = (b: { itemId?: string; categoryId?: string }) => {
+  //if (__DEV__) console.log("[promo] tapped:", JSON.stringify(b));
   if (b.itemId) return openItem(b.itemId);
   if (b.categoryId) {
-    return router.navigate({
-      pathname: "/(tabs)/SearchScreen",
-      params: { category: b.categoryId },
+    // Opens a screen with just that category's dishes.
+    return router.push({
+      pathname: "/category/[id]",
+      params: { id: b.categoryId },
     } as any);
   }
   return router.navigate("/(tabs)/SearchScreen" as any);
@@ -188,14 +191,19 @@ const HomePromos = ({
         image: imageUrl(pick),
       });
     }
+
     // Banners you create in the `promos` table replace the built-in ones.
-    const fromDb: Banner[] = promos.map((p) => ({
+    // An id can arrive as plain text or, for relationship columns, as a whole row object.
+    const idOf = (v: any): string | undefined =>
+      typeof v === "string" ? v.trim() || undefined : v?.$id;
+
+    const fromDb: Banner[] = promos.map((p: any) => ({
       key: p.$id,
       title: p.title,
       subtitle: p.subtitle ?? "",
       color: p.color || ORANGE,
-      itemId: p.menu_item_id || undefined,
-      categoryId: p.category_id || undefined,
+      itemId: idOf(p.menu_item_id ?? p.menu_item ?? p.menuItem),
+      categoryId: idOf(p.category_id ?? p.category ?? p.categoryId),
       image: withProject(p.image_url),
     }));
 
@@ -208,7 +216,8 @@ const HomePromos = ({
     };
   }, [items, promos]);
 
-  if (items.length === 0) return null;
+  // Show the block as soon as either the menu or your promos have loaded.
+  if (items.length === 0 && promos.length === 0) return null;
 
   return (
     <View style={styles.bleed}>
@@ -224,7 +233,7 @@ const HomePromos = ({
           contentContainerStyle={styles.bannerList}
           renderItem={({ item: b }) => (
             <Pressable
-              onPress={() => openItem(b.itemId)}
+              onPress={() => openBanner(b)}
               style={({ pressed }) => [
                 styles.banner,
                 {

@@ -1,7 +1,7 @@
 import CachedImage from "@/components/CachedImage";
 import CartComponent from "@/components/CartComponent";
 import HomePromos from "@/components/HomePromos";
-import { image_layout, images } from "@/constants/images";
+import { images } from "@/constants/images";
 import { updateUserAddress } from "@/lib/appwrite";
 import { withProject } from "@/lib/homeContent";
 import {
@@ -43,7 +43,7 @@ const ORANGE = "#FF8F3A";
 // The tab bar floats above the screen (~61px tall, 10px up), so lists need room under them.
 const TAB_BAR_CLEARANCE = 110;
 
-// Used when a category has no matching entry in image_layout.
+// Card colours used when a category has no `color` value in the database.
 const FALLBACK_COLORS = ["#a57913", "#74633b", "#406e3b"];
 
 const Homescreen = () => {
@@ -53,7 +53,11 @@ const Homescreen = () => {
   const { address, setAddress } = useAddressStore();
 
   // ---------------- CATEGORIES (cards) ----------------
-  const { data: categories, isLoading: categoriesLoading } = useCategories();
+  const {
+    data: categories,
+    isLoading: categoriesLoading,
+    refetch: refetchCategories,
+  } = useCategories();
 
   // Order the cards by the `sort_order` column when you set one.
   const sortedCategories = React.useMemo(
@@ -65,10 +69,21 @@ const Homescreen = () => {
   );
 
   // Banners from the `promos` table (the built-in ones show until you add some).
-  const { data: promos } = usePromos();
+  const { data: promos, refetch: refetchPromos } = usePromos();
+
+  // Pull down on the list to load your latest database changes right away.
+  const [refreshing, setRefreshing] = React.useState(false);
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([refetchCategories(), refetchMenu(), refetchPromos()]);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // ---------------- MENU (feeds the offers and rails) ----------------
-  const { data: menu } = useMenu();
+  const { data: menu, refetch: refetchMenu } = useMenu();
 
   // ---------------- ADDRESS ----------------
   // Follow the signed-in user, including clearing a previous user's address.
@@ -146,20 +161,14 @@ const Homescreen = () => {
   // ---------------- RENDER HELPERS ----------------
   const renderCard = ({ item, index }: { item: any; index: number }) => {
     const isEven = index % 2 === 0;
-    // Picture and colour come from image_layout (constants/images.ts), matched by category name.
-    const match = image_layout.find(
-      (l) => l.category === String(item.name).toLowerCase(),
-    );
-    // Database values win; the local image_layout entry is only a fallback.
-    const dbImage = withProject(item.image_url);
+    // Everything on the card comes from the categories table:
+    // name, description, image_url and color.
+    const image = withProject(item.image_url);
     const look = {
-      image: dbImage ? { uri: dbImage } : (match?.image ?? images.burgerOne),
-      color:
-        item.color ||
-        match?.color ||
-        FALLBACK_COLORS[index % FALLBACK_COLORS.length],
+      image: image ? { uri: image } : null,
+      color: item.color || FALLBACK_COLORS[index % FALLBACK_COLORS.length],
     };
-    const description = item.description || match?.desc;
+    const description = item.description;
 
     return (
       <Pressable
@@ -181,11 +190,20 @@ const Homescreen = () => {
         ]}
       >
         <View style={styles.cardImageWrap}>
-          <CachedImage
-            source={look.image}
-            resizeMode="contain"
-            style={styles.cardImage}
-          />
+          {look.image ? (
+            <CachedImage
+              source={look.image}
+              resizeMode="contain"
+              style={styles.cardImage}
+            />
+          ) : (
+            // No image_url yet: a neutral icon instead of someone else's picture.
+            <Ionicons
+              name="fast-food-outline"
+              size={64}
+              color="rgba(255,255,255,0.55)"
+            />
+          )}
         </View>
 
         <View
@@ -269,6 +287,8 @@ const Homescreen = () => {
         <FlatList
           style={styles.list}
           data={sortedCategories}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
           keyExtractor={(item) => item.$id}
           renderItem={renderCard}
           showsVerticalScrollIndicator={false}
