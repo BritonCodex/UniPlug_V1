@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Uniplug",
+    "name": "uniplug",
     "slug": "uniplug",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -54,6 +54,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "5737a707-af3d-4c75-8caf-06e98d136588"
+      }
     }
   }
 }
