@@ -131,7 +131,7 @@ const CartScreen = () => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#f7ecd1ff" }}>
       <FlatList
         data={items}
         renderItem={({ item }) => <CartItem item={item} />}

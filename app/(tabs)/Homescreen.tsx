@@ -1,5 +1,6 @@
 import CachedImage from "@/components/CachedImage";
 import CartComponent from "@/components/CartComponent";
+import AssistantButton from "@/components/AssistantButton";
 import HomePromos from "@/components/HomePromos";
 import { images } from "@/constants/images";
 import { updateUserAddress } from "@/lib/appwrite";
@@ -10,6 +11,7 @@ import {
   usePickupLocations,
   usePromos,
 } from "@/lib/queryClient";
+import { warmUp } from "@/lib/assistant";
 import { useAddressStore } from "@/store/address.sore";
 import useAuthStore from "@/store/auth.store";
 import { Ionicons } from "@expo/vector-icons";
@@ -51,6 +53,10 @@ const Homescreen = () => {
   const insets = useSafeAreaInsets();
   const { user, setUser } = useAuthStore();
   const { address, setAddress } = useAddressStore();
+
+  React.useEffect(() => {
+  warmUp(); // wakes the Render gateway so chat replies quickly
+}, []);
 
   // ---------------- CATEGORIES (cards) ----------------
   const {
@@ -399,6 +405,7 @@ const Homescreen = () => {
             </Animated.View>
           </View>
         </Modal>
+       <AssistantButton/>
       </View>
     </SafeAreaView>
   );
@@ -407,11 +414,11 @@ const Homescreen = () => {
 const styles = StyleSheet.create({
   pageContainer: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#f7ecd1ff",
   },
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#f7ecd1ff",
   },
 
   // Header

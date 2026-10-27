@@ -224,7 +224,7 @@ const OrdersScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: "#f6f6f6" },
+  page: { flex: 1, backgroundColor: "#f7ecd1ff" },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
 
   header: {

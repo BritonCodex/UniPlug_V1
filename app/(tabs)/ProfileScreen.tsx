@@ -107,7 +107,7 @@ const ProfileScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: "#f6f6f6" },
+  page: { flex: 1, backgroundColor: "#f7ecd1ff" },
 
   glow: {
     position: "absolute",

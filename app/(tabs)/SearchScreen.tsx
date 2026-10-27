@@ -36,7 +36,7 @@ const SearchScreen = () => {
   }, [category, query]);
 
   return (
-    <SafeAreaView style={{ backgroundColor: "white", height: "100%", flex: 1 }}>
+    <SafeAreaView style={{ backgroundColor: "#f7ecd1ff", height: "100%", flex: 1 }}>
       <FlatList
         showsVerticalScrollIndicator={false}
         style={{ overflow: "visible" }}

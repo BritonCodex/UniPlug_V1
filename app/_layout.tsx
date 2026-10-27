@@ -6,6 +6,7 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { Stack } from "expo-router";
 import React, { useEffect } from "react";
 import { View } from "react-native";
+import { StatusBar } from "expo-status-bar";
 
 Sentry.init({
   dsn: "https://c92b51042369060a5f19ca4ea7a03848@o4511282686656512.ingest.us.sentry.io/4511282690326528",
@@ -63,18 +64,19 @@ const RootLayout = () => {
     );
 
   return (
-    <PersistQueryClientProvider
-      client={queryClient}
-      persistOptions={{ persister, maxAge: DAY, buster: "v1" }}
-    >
-      <Stack
-        screenOptions={{
-          headerShown: false,
-        }}
-        //initialRouteName="(tabs)"
-      />
-    </PersistQueryClientProvider>
-  );
+  <PersistQueryClientProvider
+    client={queryClient}
+    persistOptions={{ persister, maxAge: DAY, buster: "v1" }}
+  >
+    <StatusBar style="dark" backgroundColor="#e9dab3" />
+
+    <Stack
+      screenOptions={{
+        headerShown: false,
+      }}
+    />
+  </PersistQueryClientProvider>
+);
 };
 
 export default Sentry.wrap(RootLayout);
