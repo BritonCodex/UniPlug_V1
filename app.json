@@ -19,7 +19,8 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.briton_buids.uniplug"
     },
     "web": {
       "output": "static",
@@ -60,6 +61,12 @@
       "eas": {
         "projectId": "5737a707-af3d-4c75-8caf-06e98d136588"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/5737a707-af3d-4c75-8caf-06e98d136588"
     }
   }
 }
