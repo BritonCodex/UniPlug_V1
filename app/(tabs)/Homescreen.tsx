@@ -11,7 +11,7 @@ import {
   usePickupLocations,
   usePromos,
 } from "@/lib/queryClient";
-import { warmUp } from "@/lib/assistant";
+//import { warmUp } from "@/lib/assistant";
 import { useAddressStore } from "@/store/address.sore";
 import useAuthStore from "@/store/auth.store";
 import { Ionicons } from "@expo/vector-icons";
@@ -54,9 +54,9 @@ const Homescreen = () => {
   const { user, setUser } = useAuthStore();
   const { address, setAddress } = useAddressStore();
 
-  React.useEffect(() => {
+  /*React.useEffect(() => {
   warmUp(); // wakes the Render gateway so chat replies quickly
-}, []);
+}, []);*/
 
   // ---------------- CATEGORIES (cards) ----------------
   const {
