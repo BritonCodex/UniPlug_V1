@@ -13,7 +13,7 @@ router.use(express.json({ limit: "20kb" }));
 
 const MODEL = process.env.ASSISTANT_MODEL || "anthropic/claude-haiku-4.5"; // any model id from openrouter.ai/models
 const DAILY_LIMIT = Number(process.env.ASSISTANT_DAILY_LIMIT || 60); // messages per user per day
-const SUPPORT_PHONE = process.env.SUPPORT_PHONE || "";
+const SUPPORT_PHONE = process.env.EXPO_PUBLIC_SUPPORT_PHONE || "";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
@@ -41,7 +41,9 @@ async function askModel(system, messages) {
     const data = await r.json().catch(() => ({}));
     if (!r.ok) {
       // 401 bad key, 402 out of credits, 429 rate limited, 5xx provider trouble
-      const err = new Error(data?.error?.message || `OpenRouter replied ${r.status}`);
+      const err = new Error(
+        data?.error?.message || `OpenRouter replied ${r.status}`,
+      );
       err.status = r.status;
       throw err;
     }
@@ -66,7 +68,10 @@ const TABLES = {
 
 // Server-side Appwrite client (API key: read-only access to the database).
 const adminDb = new Databases(
-  new Client().setEndpoint(ENDPOINT).setProject(PROJECT).setKey(process.env.APPWRITE_API_KEY),
+  new Client()
+    .setEndpoint(ENDPOINT)
+    .setProject(PROJECT)
+    .setKey(process.env.APPWRITE_API_KEY),
 );
 
 // ---------------------------------------------------------------------------------------
@@ -76,11 +81,16 @@ async function requireUser(req, res, next) {
   const jwt = (req.headers.authorization || "").replace(/^Bearer\s+/i, "");
   if (!jwt) return res.status(401).json({ error: "Please sign in to chat." });
   try {
-    const userClient = new Client().setEndpoint(ENDPOINT).setProject(PROJECT).setJWT(jwt);
+    const userClient = new Client()
+      .setEndpoint(ENDPOINT)
+      .setProject(PROJECT)
+      .setJWT(jwt);
     req.account = await new Account(userClient).get();
     next();
   } catch {
-    res.status(401).json({ error: "Your session expired. Please sign in again." });
+    res
+      .status(401)
+      .json({ error: "Your session expired. Please sign in again." });
   }
 }
 
@@ -93,7 +103,10 @@ const burstLimiter = rateLimit({
   keyGenerator: (req) => req.account.$id,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: "You're sending messages very fast. Wait a few seconds and try again." },
+  message: {
+    error:
+      "You're sending messages very fast. Wait a few seconds and try again.",
+  },
 });
 
 const daily = new Map(); // userId -> { day, count }
@@ -116,7 +129,13 @@ setInterval(() => {
 // ---------------------------------------------------------------------------------------
 // 3. What the assistant knows: the live menu (cached 5 min) + this user's own recent orders
 // ---------------------------------------------------------------------------------------
-let shop = { at: 0, menuText: "", extrasText: "", pickupText: "", ids: new Set() };
+let shop = {
+  at: 0,
+  menuText: "",
+  extrasText: "",
+  pickupText: "",
+  ids: new Set(),
+};
 
 const list = (table) =>
   adminDb.listDocuments(DB, table, [Query.limit(100)]).then((r) => r.documents);
@@ -133,11 +152,16 @@ async function getShopContext() {
 
   const catName = new Map(cats.map((c) => [c.$id, c.name]));
   const categoryOf = (m) =>
-    typeof m.categories === "string" ? catName.get(m.categories) : m.categories?.name;
+    typeof m.categories === "string"
+      ? catName.get(m.categories)
+      : m.categories?.name;
 
   const menuText = menu
     .map((m) => {
-      const was = Number(m.old_price) > Number(m.price) ? ` (was Ksh ${m.old_price})` : "";
+      const was =
+        Number(m.old_price) > Number(m.price)
+          ? ` (was Ksh ${m.old_price})`
+          : "";
       const bits = [
         `id:${m.$id}`,
         m.name,
@@ -164,7 +188,13 @@ async function getShopContext() {
 
   const pickupText = pickups.map((p) => `- ${p.name}: ${p.address}`).join("\n");
 
-  shop = { at: Date.now(), menuText, extrasText, pickupText, ids: new Set(menu.map((m) => m.$id)) };
+  shop = {
+    at: Date.now(),
+    menuText,
+    extrasText,
+    pickupText,
+    ids: new Set(menu.map((m) => m.$id)),
+  };
   return shop;
 }
 
@@ -204,7 +234,10 @@ async function getUserContext(account) {
       Query.limit(100),
     ]);
     docs = all.documents
-      .filter((o) => (typeof o.userId === "string" ? o.userId : o.userId?.$id) === row.$id)
+      .filter(
+        (o) =>
+          (typeof o.userId === "string" ? o.userId : o.userId?.$id) === row.$id,
+      )
       .slice(0, 5);
   }
 
@@ -217,11 +250,14 @@ async function getUserContext(account) {
           } catch {}
           const what = items
             .map((it) => {
-              const extras = (it.customizations || []).map((c) => c.name).join(", ");
+              const extras = (it.customizations || [])
+                .map((c) => c.name)
+                .join(", ");
               return `${it.quantity ?? 1}x ${it.name}${extras ? ` (+${extras})` : ""}`;
             })
             .join("; ");
-          const status = STATUS_TEXT[String(o.status).toLowerCase()] || o.status;
+          const status =
+            STATUS_TEXT[String(o.status).toLowerCase()] || o.status;
           return `- #${String(o.$id).slice(-6).toUpperCase()} | ${status} | Ksh ${o.totalPrice} | ${o.$createdAt} | ${what} | deliver to: ${o.address || "n/a"} | M-Pesa receipt: ${o.transactionCode || "n/a"}`;
         })
         .join("\n")
@@ -276,7 +312,12 @@ function cleanMessages(raw) {
   if (!Array.isArray(raw)) return [];
   const out = raw
     .slice(-10)
-    .filter((m) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
+    .filter(
+      (m) =>
+        m &&
+        (m.role === "user" || m.role === "assistant") &&
+        typeof m.content === "string",
+    )
     .map((m) => ({ role: m.role, content: m.content.slice(0, 500) }));
   while (out.length && out[0].role !== "user") out.shift();
   return out;
@@ -292,20 +333,32 @@ router.post("/chat", requireUser, burstLimiter, async (req, res) => {
   }
   if (!underDailyLimit(req.account.$id)) {
     return res.status(429).json({
-      error: "You've reached today's chat limit. Please try again tomorrow or contact support.",
+      error:
+        "You've reached today's chat limit. Please try again tomorrow or contact support.",
     });
   }
 
   try {
-    const [shopCtx, userCtx] = await Promise.all([getShopContext(), getUserContext(req.account)]);
+    const [shopCtx, userCtx] = await Promise.all([
+      getShopContext(),
+      getUserContext(req.account),
+    ]);
 
     const text = await askModel(buildSystemPrompt(shopCtx, userCtx), messages);
 
-    res.json({ reply: sanitizeItemTokens(text, shopCtx.ids) || "Sorry, I didn't catch that. Could you rephrase?" });
+    res.json({
+      reply:
+        sanitizeItemTokens(text, shopCtx.ids) ||
+        "Sorry, I didn't catch that. Could you rephrase?",
+    });
   } catch (e) {
     // Log the reason (never the key) so you can see it in Render -> Logs.
     console.error("assistant failed:", e?.status, e?.message);
-    res.status(503).json({ error: "The assistant is busy right now. Please try again in a moment." });
+    res
+      .status(503)
+      .json({
+        error: "The assistant is busy right now. Please try again in a moment.",
+      });
   }
 });
 

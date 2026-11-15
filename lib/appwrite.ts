@@ -16,17 +16,21 @@ import {
 export const appwriteConfig = {
   endpoint: process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT!,
   projectId: process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID!,
-  platform: "com.britoncodex.uniplug",
-  databaseId: "69e8b933003795dc4810",
-  bucketId: "69f083d5000997343bf5",
-  userCollectionId: "69e8baeb003e07b8bfc5",
-  categoriesCollectionId: "categories",
-  menuCollectionId: "menu",
-  customizationsCollectionId: "customizations",
-  menuCustomizationsCollectionId: "menu_customizations",
-  pickupLocationsCollectionId: "pickup_locations",
-  orderCollectionId: "orders",
-  promosCollectionId: "6ad89e21001a9af157f5",
+  platform: process.env.EXPO_PUBLIC_APPWRITE_PLATFORM!,
+  databaseId: process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID!,
+  bucketId: process.env.EXPO_PUBLIC_APPWRITE_BUCKET_ID!,
+  userCollectionId: process.env.EXPO_PUBLIC_APPWRITE_USER_COLLECTION_ID!,
+  categoriesCollectionId:
+    process.env.EXPO_PUBLIC_APPWRITE_CATEGORIES_COLLECTION_ID!,
+  menuCollectionId: process.env.EXPO_PUBLIC_APPWRITE_MENU_COLLECTION_ID!,
+  customizationsCollectionId:
+    process.env.EXPO_PUBLIC_APPWRITE_CUSTOMIZATION_COLLECTION_ID!,
+  menuCustomizationsCollectionId:
+    process.env.EXPO_PUBLIC_APPWRITE_MENU_CUSTOMIZATION_COLLECTION_ID!,
+  pickupLocationsCollectionId:
+    process.env.EXPO_PUBLIC_APPWRITE_PICKUP_LOCATIONS_COLLECTION_ID!,
+  orderCollectionId: process.env.EXPO_PUBLIC_APPWRITE_ORDER_COLLECTION_ID!,
+  promosCollectionId: process.env.EXPO_PUBLIC_APPWRITE_PROMOS_COLLECTION_ID!,
 };
 
 //accept new client
